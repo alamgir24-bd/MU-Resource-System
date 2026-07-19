@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage PYQ | MU Resource System</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+  <div id="navbarMount"></div>
+
+  <main class="dashboard-page">
+    <div class="container">
+      <div class="row g-4">
+        <div class="col-lg-3">
+          <div id="sidebarMount"></div>
+        </div>
+
+        <div class="col-lg-9">
+          <div class="top-card mb-4">
+            <span class="ribbon">Admin Approval</span>
+            <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap mt-3">
+              <div>
+                <h2 class="fw-bold mb-2">Manage PYQ</h2>
+                <p class="meta mb-0">Search, preview, approve, reject or delete uploaded previous year questions.</p>
+              </div>
+              <a href="upload-pyq.html" class="btn btn-primary">Upload PYQ</a>
+            </div>
+          </div>
+
+          <div class="panel-card mb-4">
+            <form id="filterForm" class="row g-3 align-items-end">
+              <div class="col-md-3">
+                <label class="form-label fw-semibold">Search</label>
+                <input id="search" class="form-control" placeholder="Title, subject, department">
+              </div>
+
+              <div class="col-md-2">
+                <label class="form-label fw-semibold">Department</label>
+                <input id="department" class="form-control" placeholder="CSE">
+              </div>
+
+              <div class="col-md-2">
+                <label class="form-label fw-semibold">Semester</label>
+                <input id="semester" class="form-control" placeholder="5th">
+              </div>
+
+              <div class="col-md-2">
+                <label class="form-label fw-semibold">Year</label>
+                <input id="year" class="form-control" placeholder="2023">
+              </div>
+
+              <div class="col-md-2">
+                <label class="form-label fw-semibold">Status</label>
+                <select id="status" class="form-select">
+                  <option value="all">All</option>
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+              </div>
+
+              <div class="col-md-1">
+                <label class="form-label fw-semibold">Sort</label>
+                <select id="sort" class="form-select">
+                  <option value="newest">Newest</option>
+                  <option value="oldest">Oldest</option>
+                  <option value="title">Title</option>
+                  <option value="downloads">Downloads</option>
+                </select>
+              </div>
+
+              <div class="col-12 d-flex gap-2 flex-wrap">
+                <button class="btn btn-primary">Apply Filter</button>
+                <button type="button" class="btn btn-outline-primary" onclick="resetFilters()">Reset</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="panel-card">
+            <div id="messageBox"></div>
+            <div id="pyqList" class="resource-grid"></div>
+            <div id="paginationMount"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="footerMount"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/common.js"></script>
+
+  <script>
+    ensureAdmin();
+    renderNavbar("dashboard");
+    renderSidebar("pyq");
+    renderFooter();
+
+    let currentPage = 1;
+
+    function safeJs(value = "") {
+      return String(value)
+        .replace(/\\/g, "\\\\")
+        .replace(/'/g, "\\'")
+        .replace(/\n/g, " ")
+        .replace(/\r/g, " ");
+    }
+
+    function getFilters(page = currentPage) {
+      const params = new URLSearchParams();
+      params.set("page", page);
+      params.set("limit", "9");
+      params.set("status", document.getElementById("status").value || "all");
+      params.set("sort", document.getElementById("sort").value || "newest");
+
+      ["search", "department", "semester", "year"].forEach(id => {
+        const value = document.getElementById(id).value.trim();
+        if (value) params.set(id, value);
+      });
+
+      return params.toString();
+    }
+
+    async function loadPYQ(page = 1) {
+      currentPage = page;
+      showLoader("pyqList", "Loading PYQ...");
+
+      try {
+        const data = await apiFetch(`/pyq?${getFilters(page)}`, {
+          headers: authHeaders(false)
+        });
+
+        const items = data.items || data || [];
+
+        if (!items.length) {
+          showEmpty("pyqList", "No PYQ matched your filter.");
+          document.getElementById("paginationMount").innerHTML = "";
+          return;
+        }
+
+        document.getElementById("pyqList").innerHTML = items.map(renderPYQCard).join("");
+
+        renderPagination({
+          mountId: "paginationMount",
+          page: data.page || 1,
+          totalPages: data.totalPages || 1,
+          onPageChange: "loadPYQ"
+        });
+      } catch (error) {
+        document.getElementById("pyqList").innerHTML = `
+          <div class="alert alert-danger rounded-4">${escapeHTML(error.message || "Unable to load PYQ.")}</div>
+        `;
+        showToast(error.message || "Unable to load PYQ.", "error");
+      }
+    }
+
+    function renderPYQCard(item) {
+      const fileUrl = getFileUrl(item.filePath);
+      const status = item.status || "pending";
+      const count = getLocalDownloadCount("pyq", item._id, item.downloadCount);
+      const safeTitle = safeJs(item.title || "PYQ");
+
+      return `
+        <div class="resource-card">
+          <div class="d-flex justify-content-between gap-2 align-items-start mb-3">
+            <span class="status-pill ${escapeHTML(status)}">${escapeHTML(status)}</span>
+            <small class="meta">${formatDate(item.createdAt)}</small>
+          </div>
+
+          <h5 class="fw-bold mb-2">${escapeHTML(item.title)}</h5>
+
+          <p class="meta mb-2">
+            ${escapeHTML(item.subject || "")} • ${escapeHTML(item.department || "")} • ${escapeHTML(item.semester || "")} • ${escapeHTML(item.year || "")}
+          </p>
+
+          <p class="meta mb-3">Downloads: ${count}</p>
+
+          <div class="d-flex gap-2 flex-wrap">
+            <button class="btn btn-outline-primary btn-sm" onclick="openFilePreview('${fileUrl}', '${safeTitle}')">Preview</button>
+            <a href="${fileUrl}" target="_blank" onclick="trackDownload('pyq','${item._id}')" class="btn btn-outline-primary btn-sm">Download</a>
+          </div>
+
+          <hr>
+
+          <div class="d-flex gap-2 flex-wrap">
+            <button class="btn btn-success btn-sm" onclick="confirmUpdateStatus('${item._id}', 'approved', '${safeTitle}')">Approve</button>
+            <button class="btn btn-warning btn-sm" onclick="confirmUpdateStatus('${item._id}', 'rejected', '${safeTitle}')">Reject</button>
+            <button class="btn btn-danger btn-sm" onclick="confirmDeletePYQ('${item._id}', '${safeTitle}')">Delete</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function confirmUpdateStatus(id, status, title) {
+      const isApprove = status === "approved";
+
+      confirmAction(
+        `Are you sure you want to ${isApprove ? "approve" : "reject"} "${title}"?`,
+        function () {
+          updateStatus(id, status);
+        },
+        {
+          title: isApprove ? "Approve PYQ" : "Reject PYQ",
+          confirmText: isApprove ? "Approve" : "Reject",
+          cancelText: "Cancel",
+          confirmButtonClass: isApprove ? "btn-success" : "btn-warning"
+        }
+      );
+    }
+
+    async function updateStatus(id, status) {
+      try {
+        const data = await apiFetch(`/pyq/${id}/status`, {
+          method: "PATCH",
+          headers: authHeaders(),
+          body: JSON.stringify({ status })
+        });
+
+        showToast(data.message || `PYQ ${status} successfully.`, "success");
+        loadPYQ(currentPage);
+      } catch (error) {
+        showToast(error.message || "Status update failed.", "error");
+      }
+    }
+
+    function confirmDeletePYQ(id, title) {
+      confirmAction(
+        `Are you sure you want to delete "${title}"? This action cannot be undone.`,
+        function () {
+          deletePYQ(id);
+        },
+        {
+          title: "Delete PYQ",
+          confirmText: "Delete",
+          cancelText: "Cancel",
+          confirmButtonClass: "btn-danger"
+        }
+      );
+    }
+
+    async function deletePYQ(id) {
+      try {
+        const data = await apiFetch(`/pyq/${id}`, {
+          method: "DELETE",
+          headers: authHeaders(false)
+        });
+
+        showToast(data.message || "PYQ deleted successfully.", "success");
+        loadPYQ(currentPage);
+      } catch (error) {
+        showToast(error.message || "Delete failed.", "error");
+      }
+    }
+
+    function resetFilters() {
+      document.getElementById("filterForm").reset();
+      document.getElementById("status").value = "all";
+      document.getElementById("sort").value = "newest";
+      showToast("Filters reset.", "info");
+      loadPYQ(1);
+    }
+
+    document.getElementById("filterForm").addEventListener("submit", function (event) {
+      event.preventDefault();
+      loadPYQ(1);
+    });
+
+    loadPYQ();
+  </script>
+</body>
+</html>

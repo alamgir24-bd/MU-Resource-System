@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile | MU Resource System</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+  <div id="navbarMount"></div>
+
+  <main class="dashboard-page">
+    <div class="container">
+      <div class="row g-4">
+        <div class="col-lg-3">
+          <div id="sidebarMount"></div>
+        </div>
+
+        <div class="col-lg-9">
+          <div class="top-card mb-4">
+            <span class="ribbon">Account Settings</span>
+            <h2 class="fw-bold mt-3 mb-2">Profile</h2>
+            <p class="meta mb-0">
+              Manage your profile information, profile picture, bookmarks and account security.
+            </p>
+          </div>
+
+          <!-- Profile Summary -->
+          <div class="panel-card mb-4">
+            <div class="row align-items-center g-4">
+              <div class="col-lg-2 col-md-3 text-center">
+                <div id="profileAvatarSummary"></div>
+              </div>
+
+              <div class="col-lg-7 col-md-9">
+                <h3 class="fw-bold mb-1" id="summaryName">Student Name</h3>
+                <p class="meta mb-2" id="summaryEmail">student@example.com</p>
+
+                <div class="d-flex gap-2 flex-wrap mb-3">
+                  <span class="dashboard-tile__badge" id="summaryStudentId">Student ID: -</span>
+                  <span class="dashboard-tile__badge" id="summaryDepartment">Department: -</span>
+                  <span class="dashboard-tile__badge" id="summarySemester">Semester: -</span>
+                  <span class="dashboard-tile__badge" id="summaryBatch">Batch: -</span>
+                </div>
+
+                <p class="meta mb-0" id="summaryAddress">
+                  Keep your profile up to date for a better academic resource experience.
+                </p>
+              </div>
+
+              <div class="col-lg-3">
+                <div class="d-grid gap-2">
+                  <a href="change-password.html" class="btn btn-outline-primary">Change Password</a>
+                  <a href="dashboard.html" class="btn btn-primary">Back to Dashboard</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row g-4">
+            <!-- Profile Form -->
+            <div class="col-lg-8">
+              <div class="panel-card">
+                <h4 class="fw-bold mb-3">Profile Information</h4>
+                <p class="meta mb-4">Update your personal and academic information below.</p>
+
+                <form id="profileForm">
+                  <div class="profile-photo-card mb-4">
+                    <div id="profileAvatarPreview"></div>
+
+                    <div class="flex-grow-1">
+                      <label class="form-label fw-semibold">Profile Picture</label>
+                      <input
+                        id="profileImage"
+                        name="profileImage"
+                        type="file"
+                        class="form-control"
+                        accept="image/png,image/jpeg,image/webp"
+                      >
+                      <small class="meta">JPG, PNG or WEBP. Maximum 2MB.</small>
+                    </div>
+                  </div>
+
+                  <div class="row g-3">
+                    <div class="col-md-6">
+                      <label class="form-label fw-semibold">Name</label>
+                      <input id="name" name="name" class="form-control" required>
+                    </div>
+
+                    <div class="col-md-6">
+                      <label class="form-label fw-semibold">Email</label>
+                      <input id="email" type="email" class="form-control" disabled>
+                    </div>
+
+                    <div class="col-md-6">
+                      <label class="form-label fw-semibold">Student ID</label>
+                      <input id="studentId" name="studentId" class="form-control" placeholder="Example: CSE-2026-001">
+                    </div>
+
+                    <div class="col-md-6">
+                      <label class="form-label fw-semibold">Department</label>
+                      <input id="department" name="department" class="form-control" placeholder="CSE">
+                    </div>
+
+                    <div class="col-md-6">
+                      <label class="form-label fw-semibold">Semester</label>
+                      <input id="semester" name="semester" class="form-control" placeholder="5th">
+                    </div>
+
+                    <div class="col-md-6">
+                      <label class="form-label fw-semibold">Batch</label>
+                      <input id="batch" name="batch" class="form-control" placeholder="56">
+                    </div>
+
+                    <div class="col-md-6">
+                      <label class="form-label fw-semibold">Phone</label>
+                      <input id="phone" name="phone" class="form-control" placeholder="01XXXXXXXXX">
+                    </div>
+
+                    <div class="col-12">
+                      <label class="form-label fw-semibold">Address</label>
+                      <textarea
+                        id="address"
+                        name="address"
+                        class="form-control"
+                        rows="3"
+                        maxlength="250"
+                        placeholder="Write your address"
+                      ></textarea>
+                    </div>
+                  </div>
+
+                  <button id="profileUpdateButton" class="btn btn-primary mt-4 px-4 py-3" type="submit">
+                    Update Profile
+                  </button>
+                </form>
+
+                <div id="profileMessage" class="mt-3"></div>
+              </div>
+            </div>
+
+            <!-- Right Side -->
+            <div class="col-lg-4">
+              <div class="panel-card mb-4">
+                <h4 class="fw-bold mb-3">Security</h4>
+                <p class="meta mb-3">
+                  Keep your account secure by updating your password regularly.
+                </p>
+
+                <div class="notice-box mb-3">
+                  <h6 class="fw-bold mb-1">Password Safety</h6>
+                  <p class="meta mb-0">
+                    Use a strong password with letters, numbers and symbols.
+                  </p>
+                </div>
+
+                <a href="change-password.html" class="btn btn-outline-primary w-100">
+                  Change Password
+                </a>
+              </div>
+
+              <div class="panel-card mb-4">
+                <h4 class="fw-bold mb-3">Account Tips</h4>
+
+                <div class="notice-box mb-3">
+                  <h6 class="fw-bold mb-1">Keep Information Updated</h6>
+                  <p class="meta mb-0">Make sure your department, semester and batch are correct.</p>
+                </div>
+
+                <div class="notice-box">
+                  <h6 class="fw-bold mb-1">Use Dashboard for Activity</h6>
+                  <p class="meta mb-0">
+                    Notifications and uploads are available from the dashboard for a cleaner profile page.
+                  </p>
+                </div>
+              </div>
+
+              <div class="panel-card">
+                <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+                  <h4 class="fw-bold mb-0">Bookmarked Resources</h4>
+                </div>
+
+                <div id="bookmarkList"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="footerMount"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/common.js"></script>
+
+  <script>
+    ensureLoggedIn();
+    renderNavbar("dashboard");
+    renderSidebar("profile");
+    renderFooter();
+
+    let currentProfile = getUser() || {};
+
+    function safeJs(value = "") {
+      return String(value)
+        .replace(/\\/g, "\\\\")
+        .replace(/'/g, "\\'")
+        .replace(/\n/g, " ")
+        .replace(/\r/g, " ");
+    }
+
+    function updateProfilePreview(user = currentProfile) {
+      document.getElementById("profileAvatarPreview").innerHTML = renderAvatar(user.profileImage, user.name, 84);
+      document.getElementById("profileAvatarSummary").innerHTML = renderAvatar(user.profileImage, user.name, 96);
+    }
+
+    function updateProfileSummary(user = currentProfile) {
+      document.getElementById("summaryName").textContent = user.name || "Student Name";
+      document.getElementById("summaryEmail").textContent = user.email || "student@example.com";
+      document.getElementById("summaryStudentId").textContent = `Student ID: ${user.studentId || "-"}`;
+      document.getElementById("summaryDepartment").textContent = `Department: ${user.department || "-"}`;
+      document.getElementById("summarySemester").textContent = `Semester: ${user.semester || "-"}`;
+      document.getElementById("summaryBatch").textContent = `Batch: ${user.batch || "-"}`;
+      document.getElementById("summaryAddress").textContent =
+        user.address || "Keep your profile up to date for a better academic resource experience.";
+    }
+
+    function fillProfile(user) {
+      document.getElementById("name").value = user.name || "";
+      document.getElementById("email").value = user.email || "";
+      document.getElementById("studentId").value = user.studentId || "";
+      document.getElementById("department").value = user.department || "";
+      document.getElementById("semester").value = user.semester || "";
+      document.getElementById("batch").value = user.batch || "";
+      document.getElementById("phone").value = user.phone || "";
+      document.getElementById("address").value = user.address || "";
+    }
+
+    async function loadProfile() {
+      try {
+        const profile = await apiFetch("/users/profile", {
+          headers: authHeaders(false)
+        });
+
+        currentProfile = profile;
+        fillProfile(profile);
+        updateProfilePreview(profile);
+        updateProfileSummary(profile);
+
+        saveUser({ ...getUser(), ...profile, id: profile._id });
+        renderNavbar("dashboard");
+        renderSidebar("profile");
+      } catch (error) {
+        const user = getUser();
+
+        if (user) {
+          currentProfile = user;
+          fillProfile(user);
+          updateProfilePreview(user);
+          updateProfileSummary(user);
+        }
+
+        showToast("Profile loaded from local data.", "info");
+      }
+
+      renderBookmarks();
+    }
+
+    document.getElementById("profileImage").addEventListener("change", function () {
+      const file = this.files[0];
+      const profileMessage = document.getElementById("profileMessage");
+
+      profileMessage.innerHTML = "";
+
+      if (!file) {
+        updateProfilePreview();
+        return;
+      }
+
+      const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+      const maxSize = 2 * 1024 * 1024;
+
+      if (!allowedTypes.includes(file.type)) {
+        this.value = "";
+        updateProfilePreview();
+        showToast("Only JPG, PNG or WEBP image files are allowed.", "warning");
+        return;
+      }
+
+      if (file.size > maxSize) {
+        this.value = "";
+        updateProfilePreview();
+        showToast("Profile image must be under 2MB.", "warning");
+        return;
+      }
+
+      const reader = new FileReader();
+
+      reader.onload = event => {
+        const previewHtml = `
+          <img src="${event.target.result}" alt="Profile preview" class="profile-avatar" style="width:84px;height:84px;">
+        `;
+
+        const summaryHtml = `
+          <img src="${event.target.result}" alt="Profile preview" class="profile-avatar" style="width:96px;height:96px;">
+        `;
+
+        document.getElementById("profileAvatarPreview").innerHTML = previewHtml;
+        document.getElementById("profileAvatarSummary").innerHTML = summaryHtml;
+      };
+
+      reader.readAsDataURL(file);
+      showToast("Profile image selected successfully.", "info");
+    });
+
+    document.getElementById("profileForm").addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      const button = document.getElementById("profileUpdateButton");
+      const profileMessage = document.getElementById("profileMessage");
+      const name = document.getElementById("name").value.trim();
+
+      profileMessage.innerHTML = "";
+
+      if (!name) {
+        showToast("Name is required.", "warning");
+        return;
+      }
+
+      const formData = new FormData();
+
+      ["name", "studentId", "department", "semester", "batch", "phone", "address"].forEach(id => {
+        formData.append(id, document.getElementById(id).value.trim());
+      });
+
+      const imageFile = document.getElementById("profileImage").files[0];
+
+      if (imageFile) {
+        formData.append("profileImage", imageFile);
+      }
+
+      button.disabled = true;
+      button.textContent = "Updating profile...";
+
+      try {
+        const updated = await apiFetch("/users/profile", {
+          method: "PUT",
+          headers: authHeaders(false),
+          body: formData
+        });
+
+        currentProfile = updated.user;
+        saveUser({ ...getUser(), ...updated.user, id: updated.user._id });
+
+        document.getElementById("profileImage").value = "";
+
+        fillProfile(updated.user);
+        updateProfilePreview(updated.user);
+        updateProfileSummary(updated.user);
+
+        renderNavbar("dashboard");
+        renderSidebar("profile");
+
+        showToast(updated.message || "Profile updated successfully.", "success");
+
+        profileMessage.innerHTML = `
+          <div class="alert alert-success rounded-4">
+            ${escapeHTML(updated.message || "Profile updated successfully.")}
+          </div>
+        `;
+      } catch (error) {
+        showToast(error.message || "Profile update failed.", "error");
+      } finally {
+        button.disabled = false;
+        button.textContent = "Update Profile";
+      }
+    });
+
+    function renderBookmarks() {
+      const box = document.getElementById("bookmarkList");
+      const items = getBookmarks();
+
+      if (!items.length) {
+        box.innerHTML = `
+          <div class="empty-state">
+            <h6 class="fw-bold mb-1">No bookmarks yet</h6>
+            <p class="mb-0">Saved notes and PYQ will appear here.</p>
+          </div>
+        `;
+        return;
+      }
+
+      box.innerHTML = items.map(item => {
+        const fileUrl = getFileUrl(item.filePath);
+        const safeTitle = safeJs(item.title || "Resource");
+
+        return `
+          <div class="item-row">
+            <span class="dashboard-tile__badge">${escapeHTML(item.type)}</span>
+            <h6 class="fw-bold mt-2 mb-1">${escapeHTML(item.title)}</h6>
+            <p class="meta mb-2">${escapeHTML(item.subject || "")}</p>
+
+            <div class="d-flex gap-2 flex-wrap">
+              <button class="btn btn-outline-primary btn-sm" onclick="openFilePreview('${fileUrl}', '${safeTitle}')">
+                Preview
+              </button>
+
+              <button class="btn btn-danger btn-sm" onclick="confirmRemoveBookmark('${escapeHTML(item.type)}', '${escapeHTML(item.id)}', '${safeTitle}')">
+                Remove
+              </button>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function confirmRemoveBookmark(type, id, title) {
+      confirmAction(
+        `Are you sure you want to remove "${title}" from bookmarks?`,
+        function () {
+          removeBookmark(type, id);
+        },
+        {
+          title: "Remove Bookmark",
+          confirmText: "Remove",
+          cancelText: "Cancel",
+          confirmButtonClass: "btn-danger"
+        }
+      );
+    }
+
+    function removeBookmark(type, id) {
+      saveBookmarks(getBookmarks().filter(item => !(item.type === type && item.id === id)));
+      renderBookmarks();
+      showToast("Bookmark removed successfully.", "success");
+    }
+
+    updateProfilePreview();
+    updateProfileSummary();
+    loadProfile();
+  </script>
+</body>
+</html>

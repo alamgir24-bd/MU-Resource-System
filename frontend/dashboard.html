@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Dashboard | MU Resource System</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+  <div id="navbarMount"></div>
+
+  <main class="dashboard-page">
+    <div class="container">
+      <div class="row g-4">
+        <div class="col-lg-3">
+          <div id="sidebarMount"></div>
+        </div>
+
+        <div class="col-lg-9">
+          <div class="top-card mb-4">
+            <span class="ribbon">Student Panel</span>
+
+            <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap mt-3">
+              <div>
+                <h2 class="fw-bold mb-2">Welcome, <span id="studentName">Student</span></h2>
+                <p class="meta mb-0">Track your uploads, approvals, announcements and academic resources.</p>
+              </div>
+
+              <div class="d-flex gap-2 flex-wrap">
+                <button class="btn btn-outline-primary" onclick="refreshDashboard()">Refresh</button>
+                <a href="profile.html" class="btn btn-primary">View Profile</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="row g-4 mb-4">
+            <div class="col-md-4">
+              <div class="dashboard-tile">
+                <span class="dashboard-tile__badge">Approved Notes</span>
+                <h3 id="totalNotes">0</h3>
+                <p>Available notes</p>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <div class="dashboard-tile">
+                <span class="dashboard-tile__badge">Approved PYQ</span>
+                <h3 id="totalPYQ">0</h3>
+                <p>Available question papers</p>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <div class="dashboard-tile">
+                <span class="dashboard-tile__badge">My Uploads</span>
+                <h3 id="myUploads">0</h3>
+                <p>Total submitted resources</p>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <div class="dashboard-tile warning-tile">
+                <span class="dashboard-tile__badge">Pending</span>
+                <h3 id="pendingUploads">0</h3>
+                <p>Waiting for admin approval</p>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <div class="dashboard-tile">
+                <span class="dashboard-tile__badge">Approved</span>
+                <h3 id="approvedUploads">0</h3>
+                <p>Your approved uploads</p>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <div class="dashboard-tile">
+                <span class="dashboard-tile__badge">Announcements</span>
+                <h3 id="unreadAnnouncements">0</h3>
+                <p>Total published notices</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="row g-4">
+            <div class="col-lg-7">
+              <div class="panel-card h-100">
+                <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap mb-3">
+                  <div>
+                    <h4 class="fw-bold mb-1">Recent Notifications</h4>
+                    <p class="meta mb-0">Approval updates and account notifications.</p>
+                  </div>
+
+                  <a href="profile.html" class="btn btn-outline-primary btn-sm">View All</a>
+                </div>
+
+                <div id="notificationList" class="d-grid gap-2">
+                  <div class="empty-state">Loading notifications...</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-lg-5">
+              <div class="panel-card h-100">
+                <h4 class="fw-bold mb-3">Quick Actions</h4>
+
+                <div class="d-grid gap-3">
+                  <a href="upload-notes.html" class="action-card">
+                    <strong>Upload Notes</strong>
+                    <span>Submit notes for admin approval</span>
+                  </a>
+
+                  <a href="upload-pyq.html" class="action-card">
+                    <strong>Upload PYQ</strong>
+                    <span>Submit previous year questions</span>
+                  </a>
+
+                  <a href="view-notes.html" class="action-card">
+                    <strong>Browse Notes</strong>
+                    <span>Search, preview and bookmark notes</span>
+                  </a>
+
+                  <a href="view-pyq.html" class="action-card">
+                    <strong>Browse PYQ</strong>
+                    <span>Search previous year questions</span>
+                  </a>
+
+                  <a href="cgpa.html" class="action-card">
+                    <strong>CGPA Calculator</strong>
+                    <span>Calculate semester result</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-card mt-4">
+            <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap mb-3">
+              <div>
+                <h4 class="fw-bold mb-1">My Recent Uploads</h4>
+                <p class="meta mb-0">Latest notes and PYQ submitted by you.</p>
+              </div>
+
+              <a href="profile.html" class="btn btn-outline-primary btn-sm">Manage Uploads</a>
+            </div>
+
+            <div id="myUploadsList">
+              <div class="empty-state">Loading uploads...</div>
+            </div>
+          </div>
+
+          <div class="panel-card mt-4">
+            <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap mb-3">
+              <div>
+                <h4 class="fw-bold mb-1">Saved Bookmarks</h4>
+                <p class="meta mb-0">Recently saved resources from Notes and PYQ pages.</p>
+              </div>
+
+              <a href="profile.html" class="btn btn-outline-primary btn-sm">View All</a>
+            </div>
+
+            <div id="bookmarkPreviewList">
+              <div class="empty-state">Loading bookmarks...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="footerMount"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/common.js"></script>
+
+  <script>
+    ensureLoggedIn();
+
+    const user = getUser();
+
+    if (user?.role === "admin") {
+      window.location.href = "admin-dashboard.html";
+    }
+
+    renderNavbar("dashboard");
+    renderSidebar("dashboard");
+    renderFooter();
+
+    document.getElementById("studentName").textContent = user?.name || "Student";
+
+    function safeJs(value = "") {
+      return String(value)
+        .replace(/\\/g, "\\\\")
+        .replace(/'/g, "\\'")
+        .replace(/\n/g, " ")
+        .replace(/\r/g, " ");
+    }
+
+    async function loadStats() {
+      try {
+        const stats = await apiFetch("/dashboard/student-stats", {
+          headers: authHeaders(false)
+        });
+
+        document.getElementById("totalNotes").textContent = stats.totalNotes || 0;
+        document.getElementById("totalPYQ").textContent = stats.totalPYQ || 0;
+        document.getElementById("myUploads").textContent = stats.myUploads || 0;
+        document.getElementById("pendingUploads").textContent = stats.pendingUploads || 0;
+        document.getElementById("approvedUploads").textContent = stats.approvedUploads || 0;
+        document.getElementById("unreadAnnouncements").textContent = stats.unreadAnnouncements || 0;
+      } catch (error) {
+        showToast(error.message || "Unable to load dashboard statistics.", "error");
+      }
+    }
+
+    async function loadNotifications() {
+      const box = document.getElementById("notificationList");
+
+      box.innerHTML = `<div class="empty-state">Loading notifications...</div>`;
+
+      try {
+        const items = await apiFetch("/users/notifications", {
+          headers: authHeaders(false)
+        });
+
+        if (!items.length) {
+          box.innerHTML = `
+            <div class="empty-state">
+              <h6 class="fw-bold mb-1">No notifications yet</h6>
+              <p class="mb-0">Upload approval updates will appear here.</p>
+            </div>
+          `;
+          return;
+        }
+
+        box.innerHTML = items.slice(0, 5).map(item => `
+          <div class="notification-item">
+            <div class="d-flex justify-content-between gap-2 flex-wrap">
+              <h6 class="fw-bold mb-1">${escapeHTML(item.title || "Notification")}</h6>
+              <small class="meta">${formatDate(item.createdAt)}</small>
+            </div>
+
+            <p class="meta mb-0">${escapeHTML(item.message || "")}</p>
+          </div>
+        `).join("");
+      } catch {
+        box.innerHTML = `
+          <div class="empty-state">
+            Notifications are not available right now.
+          </div>
+        `;
+      }
+    }
+
+    async function loadMyUploads() {
+      const box = document.getElementById("myUploadsList");
+
+      box.innerHTML = `<div class="empty-state">Loading uploads...</div>`;
+
+      try {
+        const data = await apiFetch("/users/my-uploads", {
+          headers: authHeaders(false)
+        });
+
+        const uploads = [
+          ...(data.notes || []).map(item => ({ ...item, type: "Note" })),
+          ...(data.pyq || []).map(item => ({ ...item, type: "PYQ" }))
+        ].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+        if (!uploads.length) {
+          box.innerHTML = `
+            <div class="empty-state">
+              <h6 class="fw-bold mb-1">No uploads yet</h6>
+              <p class="mb-0">Upload notes or PYQ to track them here.</p>
+            </div>
+          `;
+          return;
+        }
+
+        box.innerHTML = uploads.slice(0, 5).map(item => {
+          const fileUrl = getFileUrl(item.filePath);
+          const status = item.status || "pending";
+          const safeTitle = safeJs(item.title || "Upload");
+
+          return `
+            <div class="upload-item">
+              <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                <div>
+                  <span class="dashboard-tile__badge">${escapeHTML(item.type)}</span>
+                  <h6 class="fw-bold mt-2 mb-1">${escapeHTML(item.title || "Untitled")}</h6>
+                  <p class="meta mb-1">
+                    ${escapeHTML(item.subject || "")} • ${escapeHTML(item.department || "")} • ${escapeHTML(item.semester || "")}
+                  </p>
+                  <small class="meta">Uploaded: ${formatDate(item.createdAt)}</small>
+                </div>
+
+                <span class="status-pill ${escapeHTML(status)}">${escapeHTML(status)}</span>
+              </div>
+
+              <div class="d-flex gap-2 mt-3 flex-wrap">
+                <button class="btn btn-outline-primary btn-sm" onclick="openFilePreview('${fileUrl}', '${safeTitle}')">
+                  Preview
+                </button>
+
+                <a href="${fileUrl}" target="_blank" class="btn btn-outline-primary btn-sm">
+                  Open
+                </a>
+              </div>
+            </div>
+          `;
+        }).join("");
+      } catch {
+        box.innerHTML = `
+          <div class="empty-state">
+            Unable to load uploads right now.
+          </div>
+        `;
+      }
+    }
+
+    function loadBookmarkPreview() {
+      const box = document.getElementById("bookmarkPreviewList");
+      const bookmarks = getBookmarks();
+
+      if (!bookmarks.length) {
+        box.innerHTML = `
+          <div class="empty-state">
+            <h6 class="fw-bold mb-1">No bookmarks yet</h6>
+            <p class="mb-0">Bookmark notes or PYQ to access them quickly.</p>
+          </div>
+        `;
+        return;
+      }
+
+      box.innerHTML = bookmarks.slice(0, 4).map(item => {
+        const fileUrl = getFileUrl(item.filePath);
+        const safeTitle = safeJs(item.title || "Resource");
+
+        return `
+          <div class="item-row">
+            <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+              <div>
+                <span class="dashboard-tile__badge">${escapeHTML(item.type || "resource")}</span>
+                <h6 class="fw-bold mt-2 mb-1">${escapeHTML(item.title || "Untitled")}</h6>
+                <p class="meta mb-0">${escapeHTML(item.subject || "")}</p>
+              </div>
+
+              <button class="btn btn-outline-primary btn-sm" onclick="openFilePreview('${fileUrl}', '${safeTitle}')">
+                Preview
+              </button>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    async function refreshDashboard() {
+      await Promise.all([
+        loadStats(),
+        loadNotifications(),
+        loadMyUploads()
+      ]);
+
+      loadBookmarkPreview();
+      showToast("Dashboard refreshed.", "info");
+    }
+
+    loadStats();
+    loadNotifications();
+    loadMyUploads();
+    loadBookmarkPreview();
+  </script>
+</body>
+</html>

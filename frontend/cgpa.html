@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CGPA Calculator | MU Resource System</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/style.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <style>
+    .grade-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      font-weight: 800;
+      font-size: 0.85rem;
+      background: var(--primary-soft);
+      color: var(--primary-dark);
+      flex-shrink: 0;
+    }
+    .course-row {
+      display: grid;
+      grid-template-columns: 1fr 110px 110px 40px;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .course-row:last-child { border-bottom: 0; }
+    .cgpa-display {
+      font-size: 3.6rem;
+      font-weight: 800;
+      letter-spacing: -0.05em;
+      color: var(--primary);
+      line-height: 1;
+    }
+    .semester-history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #fff;
+      margin-bottom: 8px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .semester-history-item:hover { border-color: rgba(37,99,235,0.3); }
+    .tab-pill {
+      display: inline-flex;
+      gap: 4px;
+      background: #f1f5f9;
+      padding: 4px;
+      border-radius: 14px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .tab-pill button {
+      border: 0;
+      background: transparent;
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-weight: 700;
+      color: var(--muted);
+      cursor: pointer;
+      transition: 0.2s ease;
+      font-size: 0.88rem;
+    }
+    .tab-pill button.active {
+      background: #fff;
+      color: var(--primary-dark);
+      box-shadow: 0 2px 8px rgba(15,23,42,0.1);
+    }
+    .whatif-highlight {
+      background: linear-gradient(135deg, rgba(37,99,235,0.07), rgba(37,99,235,0.03));
+      border: 1px solid rgba(37,99,235,0.18);
+      border-radius: 16px;
+      padding: 18px 20px;
+    }
+    .target-result {
+      background: linear-gradient(135deg, rgba(22,163,74,0.08), rgba(22,163,74,0.03));
+      border: 1px solid rgba(22,163,74,0.22);
+      border-radius: 16px;
+      padding: 18px 20px;
+    }
+    .trend-up   { color: #16a34a; }
+    .trend-down { color: #dc2626; }
+    .trend-flat { color: var(--muted); }
+    .sync-banner {
+      background: linear-gradient(135deg, rgba(37,99,235,0.09), rgba(37,99,235,0.04));
+      border: 1px solid rgba(37,99,235,0.22);
+      border-radius: 16px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .sem-label-input {
+      border: 0;
+      background: transparent;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--text);
+      width: 160px;
+      padding: 2px 6px;
+      border-radius: 8px;
+    }
+    .sem-label-input:focus {
+      outline: none;
+      background: var(--primary-soft);
+    }
+    @media (max-width: 575px) {
+      .course-row { grid-template-columns: 1fr 80px 80px 32px; gap: 6px; }
+      .cgpa-display { font-size: 2.6rem; }
+      .tab-pill button { padding: 7px 11px; font-size: 0.82rem; }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="navbarMount"></div>
+
+  <main class="dashboard-page">
+    <div class="container">
+      <div class="row g-4">
+
+        <div class="col-lg-3">
+          <div id="sidebarMount"></div>
+        </div>
+
+        <div class="col-lg-9">
+
+          <!-- Header -->
+          <div class="top-card mb-4">
+            <span class="ribbon">Academic Tools</span>
+            <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap mt-3">
+              <div>
+                <h2 class="fw-bold mb-2">CGPA Calculator</h2>
+                <p class="meta mb-0">Calculate, track, simulate and plan your academic performance.</p>
+              </div>
+              <div id="syncStatus"></div>
+            </div>
+          </div>
+
+          <!-- Tab Pills -->
+          <div class="tab-pill">
+            <button class="active" id="tabCalcBtn"    onclick="showTab('calc')">Calculator</button>
+            <button id="tabHistoryBtn"                 onclick="showTab('history')">Semester History</button>
+            <button id="tabTargetBtn"                  onclick="showTab('target')">Target Planner</button>
+            <button id="tabWhatifBtn"                  onclick="showTab('whatif')">What If?</button>
+          </div>
+
+          <!-- ===========================
+               TAB 1: CALCULATOR
+          =========================== -->
+          <div id="tabCalc">
+
+            <!-- Sync banner for guests -->
+            <div class="sync-banner" id="guestBanner" style="display:none;">
+              <div>
+                <strong>📱 You are not logged in</strong>
+                <p class="meta mb-0" style="font-size:0.88rem;">Your results are calculated live but <strong>not saved</strong>. Login to save semester history across all devices.</p>
+              </div>
+              <a href="login.html" class="btn btn-primary btn-sm">Login to Save</a>
+            </div>
+
+            <div class="panel-card mb-4">
+              <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap mb-3">
+                <div>
+                  <h4 class="fw-bold mb-1">Current Semester</h4>
+                  <p class="meta mb-0">Add your courses, credits and grades.</p>
+                </div>
+                <button class="btn btn-outline-primary btn-sm" onclick="addCourse()">+ Add Course</button>
+              </div>
+
+              <!-- Semester label (login only) -->
+              <div id="semLabelWrap" style="display:none;" class="mb-3">
+                <label class="form-label fw-semibold">Semester Name</label>
+                <input id="semLabel" class="form-control" style="max-width:260px;" placeholder="e.g. Fall 2025 / Semester 3">
+              </div>
+
+              <div class="course-row" style="border-bottom:2px solid var(--border);padding-bottom:8px;">
+                <small class="fw-bold text-muted">Course Name</small>
+                <small class="fw-bold text-muted">Credits</small>
+                <small class="fw-bold text-muted">Grade</small>
+                <span></span>
+              </div>
+
+              <div id="courseList"></div>
+
+              <div class="d-flex gap-2 flex-wrap mt-4">
+                <button class="btn btn-primary"         onclick="calculateGPA()">Calculate GPA</button>
+                <button class="btn btn-outline-primary" onclick="addCourse()">+ Add Course</button>
+                <button class="btn btn-outline-primary" onclick="clearCourses()">Clear All</button>
+              </div>
+            </div>
+
+            <!-- Result Card -->
+            <div class="panel-card" id="resultCard" style="display:none;">
+              <div class="row g-4 align-items-center">
+                <div class="col-md-4 text-center">
+                  <p class="meta mb-1">Semester GPA</p>
+                  <div class="cgpa-display" id="resultGPA">0.00</div>
+                  <p class="meta mt-2 mb-0" id="resultGrade"></p>
+                </div>
+                <div class="col-md-4 text-center">
+                  <p class="meta mb-1">Total Credits</p>
+                  <div class="cgpa-display" id="resultCredits" style="color:var(--accent);">0</div>
+                  <p class="meta mt-2 mb-0">Credit hours</p>
+                </div>
+                <div class="col-md-4 text-center">
+                  <p class="meta mb-1">Overall CGPA</p>
+                  <div class="cgpa-display" id="resultCGPA" style="color:var(--success);">—</div>
+                  <p class="meta mt-2 mb-0">Cumulative</p>
+                </div>
+              </div>
+
+              <hr class="my-4">
+
+              <div class="d-flex gap-2 flex-wrap justify-content-center" id="resultActions"></div>
+            </div>
+          </div>
+
+          <!-- ===========================
+               TAB 2: SEMESTER HISTORY
+          =========================== -->
+          <div id="tabHistory" style="display:none;">
+            <div class="panel-card mb-4">
+              <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap mb-4">
+                <div>
+                  <h4 class="fw-bold mb-1">Semester History</h4>
+                  <p class="meta mb-0">Your GPA trend across all saved semesters.</p>
+                </div>
+                <button class="btn btn-outline-primary btn-sm" onclick="clearHistory()">Clear History</button>
+              </div>
+
+              <div style="position:relative;height:260px;margin-bottom:28px;" id="chartWrap">
+                <canvas id="trendChart"></canvas>
+              </div>
+
+              <div class="row g-3 mb-4" id="historySummary" style="display:none;">
+                <div class="col-6 col-md-3">
+                  <div class="dashboard-tile" style="min-height:unset;padding:16px;">
+                    <span class="dashboard-tile__badge" style="font-size:0.7rem;">Highest GPA</span>
+                    <h3 id="statHighest" style="font-size:1.8rem;">—</h3>
+                  </div>
+                </div>
+                <div class="col-6 col-md-3">
+                  <div class="dashboard-tile" style="min-height:unset;padding:16px;">
+                    <span class="dashboard-tile__badge" style="font-size:0.7rem;">Lowest GPA</span>
+                    <h3 id="statLowest" style="font-size:1.8rem;">—</h3>
+                  </div>
+                </div>
+                <div class="col-6 col-md-3">
+                  <div class="dashboard-tile" style="min-height:unset;padding:16px;">
+                    <span class="dashboard-tile__badge" style="font-size:0.7rem;">Current CGPA</span>
+                    <h3 id="statCGPA" style="font-size:1.8rem;">—</h3>
+                  </div>
+                </div>
+                <div class="col-6 col-md-3">
+                  <div class="dashboard-tile" style="min-height:unset;padding:16px;">
+                    <span class="dashboard-tile__badge" style="font-size:0.7rem;">Trend</span>
+                    <h3 id="statTrend" style="font-size:1.4rem;">—</h3>
+                  </div>
+                </div>
+              </div>
+
+              <div id="historyList"></div>
+            </div>
+          </div>
+
+          <!-- ===========================
+               TAB 3: TARGET PLANNER
+          =========================== -->
+          <div id="tabTarget" style="display:none;">
+            <div class="panel-card mb-4">
+              <h4 class="fw-bold mb-1">Target CGPA Planner</h4>
+              <p class="meta mb-4">Tell us your goal — we will calculate what you need each semester.</p>
+
+              <!-- Auto-fill from history if logged in -->
+              <div id="targetAutoFill" style="display:none;" class="sync-banner mb-4">
+                <div>
+                  <strong>✨ Auto-filled from your history</strong>
+                  <p class="meta mb-0" style="font-size:0.88rem;">Current CGPA and completed credits loaded from your saved semesters.</p>
+                </div>
+              </div>
+
+              <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                  <label class="form-label fw-semibold">Current CGPA</label>
+                  <input id="targetCurrentCGPA" type="number" step="0.01" min="0" max="4" class="form-control" placeholder="e.g. 3.20">
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label fw-semibold">Completed Credits</label>
+                  <input id="targetCompletedCredits" type="number" min="0" class="form-control" placeholder="e.g. 90">
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label fw-semibold">Target CGPA</label>
+                  <input id="targetGoalCGPA" type="number" step="0.01" min="0" max="4" class="form-control" placeholder="e.g. 3.80">
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label fw-semibold">Remaining Credits</label>
+                  <input id="targetRemainingCredits" type="number" min="1" class="form-control" placeholder="e.g. 60">
+                </div>
+              </div>
+
+              <button class="btn btn-primary" onclick="calculateTarget()">Calculate Plan</button>
+
+              <div id="targetResult" class="mt-4" style="display:none;"></div>
+            </div>
+          </div>
+
+          <!-- ===========================
+               TAB 4: WHAT IF
+          =========================== -->
+          <div id="tabWhatif" style="display:none;">
+            <div class="panel-card mb-4">
+              <h4 class="fw-bold mb-1">What If Simulator</h4>
+              <p class="meta mb-4">Change any course grade and instantly see how your GPA would change.</p>
+
+              <div id="whatifEmpty" class="empty-state">
+                <h5 class="fw-bold mb-2">No courses yet</h5>
+                <p class="mb-3">Go to the Calculator tab, add your courses and calculate GPA first.</p>
+                <button class="btn btn-primary" onclick="showTab('calc')">Go to Calculator</button>
+              </div>
+
+              <div id="whatifContent" style="display:none;">
+                <div class="whatif-highlight mb-4">
+                  <div class="row g-3 align-items-center">
+                    <div class="col-md-6">
+                      <p class="meta mb-1">Original GPA</p>
+                      <div style="font-size:2.2rem;font-weight:800;color:var(--primary);" id="whatifOriginal">—</div>
+                    </div>
+                    <div class="col-md-6">
+                      <p class="meta mb-1">Simulated GPA</p>
+                      <div style="font-size:2.2rem;font-weight:800;color:var(--success);" id="whatifSimulated">—</div>
+                    </div>
+                  </div>
+                  <div class="mt-2" id="whatifDiff"></div>
+                </div>
+
+                <div class="course-row" style="grid-template-columns:1fr 80px 80px 100px;border-bottom:2px solid var(--border);padding-bottom:8px;">
+                  <small class="fw-bold text-muted">Course</small>
+                  <small class="fw-bold text-muted">Credits</small>
+                  <small class="fw-bold text-muted">Original</small>
+                  <small class="fw-bold text-muted">Change To</small>
+                </div>
+
+                <div id="whatifList"></div>
+                <button class="btn btn-outline-primary mt-4" onclick="resetWhatif()">Reset All</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="footerMount"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/common.js"></script>
+  <script>
+
+    /* =============================================
+       GRADE SCALE
+    ============================================= */
+    const GRADE_POINTS = {
+      "A+":4.00,"A":4.00,"A-":3.70,
+      "B+":3.30,"B":3.00,"B-":2.70,
+      "C+":2.30,"C":2.00,"C-":1.70,
+      "D+":1.30,"D":1.00,"F":0.00
+    };
+    const GRADE_OPTIONS = Object.keys(GRADE_POINTS);
+
+    function gradeLabel(gpa) {
+      if (gpa >= 3.80) return "🏆 Outstanding";
+      if (gpa >= 3.50) return "🌟 Excellent";
+      if (gpa >= 3.00) return "✅ Good Standing";
+      if (gpa >= 2.50) return "📘 Satisfactory";
+      if (gpa >= 2.00) return "⚠️ Below Average";
+      return "❌ Failing";
+    }
+
+    /* =============================================
+       STATE
+    ============================================= */
+    let courses        = [];
+    let lastGPA        = null;
+    let whatifCourses  = [];
+    let trendChartInst = null;
+    let serverHistory  = [];   /* loaded from backend when logged in */
+
+    const LOCAL_KEY = "cgpa_history_v2";
+
+    /* =============================================
+       HISTORY HELPERS
+    ============================================= */
+    async function loadHistory() {
+      if (isLoggedIn()) {
+        try {
+          const data   = await apiFetch("/semesters", { headers: authHeaders() });
+          serverHistory = Array.isArray(data) ? data : [];
+          return serverHistory.map(r => ({
+            _id:     r._id,
+            label:   r.label,
+            gpa:     r.gpa,
+            credits: r.credits,
+            courses: r.courses || [],
+            date:    r.createdAt
+          }));
+        } catch { return []; }
+      }
+      /* Guest: localStorage */
+      try { return JSON.parse(localStorage.getItem(LOCAL_KEY) || "[]"); }
+      catch { return []; }
+    }
+
+    async function saveNewSemester(entry) {
+      if (isLoggedIn()) {
+        const data = await apiFetch("/semesters", {
+          method:  "POST",
+          headers: authHeaders(),
+          body:    JSON.stringify(entry)
+        });
+        return data.record;
+      }
+      /* Guest: localStorage */
+      const history = await loadHistory();
+      history.push({ ...entry, date: new Date().toISOString() });
+      localStorage.setItem(LOCAL_KEY, JSON.stringify(history));
+    }
+
+    async function deleteSemesterById(item) {
+      if (isLoggedIn() && item._id) {
+        await apiFetch(`/semesters/${item._id}`, {
+          method:  "DELETE",
+          headers: authHeaders()
+        });
+        return;
+      }
+      /* Guest: localStorage by index */
+      const history = await loadHistory();
+      const idx = history.findIndex(h => h.label === item.label && h.date === item.date);
+      if (idx !== -1) { history.splice(idx, 1); }
+      localStorage.setItem(LOCAL_KEY, JSON.stringify(history));
+    }
+
+    async function clearAllHistory() {
+      if (isLoggedIn()) {
+        const history = await loadHistory();
+        await Promise.all(history.map(h => apiFetch(`/semesters/${h._id}`, {
+          method: "DELETE", headers: authHeaders()
+        })));
+        return;
+      }
+      localStorage.removeItem(LOCAL_KEY);
+    }
+
+    /* =============================================
+       INIT
+    ============================================= */
+    document.addEventListener("DOMContentLoaded", () => {
+      renderNavbar("cgpa");
+      renderSidebar("cgpa");
+      renderFooter();
+
+      const loggedIn = isLoggedIn();
+
+      /* Guest banner */
+      document.getElementById("guestBanner").style.display    = loggedIn ? "none" : "flex";
+
+      /* Semester label field (login only) */
+      document.getElementById("semLabelWrap").style.display   = loggedIn ? "block" : "none";
+
+      /* Sync status badge */
+      if (loggedIn) {
+        const user = getUser();
+        document.getElementById("syncStatus").innerHTML = `
+          <span class="status-pill approved">☁️ Synced — ${escapeHTML(user?.name || "")}</span>`;
+      } else {
+        document.getElementById("syncStatus").innerHTML = "";
+      }
+
+
+      addDefaultCourses();
+    });
+
+    function addDefaultCourses() {
+      courses = [];
+      for (let i = 0; i < 4; i++) addCourse(false);
+      renderCourseList();
+    }
+
+    /* =============================================
+       TAB SWITCHING
+    ============================================= */
+    const TABS = ["calc","history","target","whatif"];
+
+    function showTab(name) {
+      TABS.forEach(t => {
+        document.getElementById(`tab${cap(t)}`).style.display = t === name ? "block" : "none";
+        document.getElementById(`tab${cap(t)}Btn`).classList.toggle("active", t === name);
+      });
+      if (name === "history") renderHistory();
+      if (name === "whatif")  renderWhatif();
+      if (name === "target")  autoFillTarget();
+    }
+
+    function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+    /* =============================================
+       TAB 1 — CALCULATOR
+    ============================================= */
+    function addCourse(render = true) {
+      courses.push({ name:"", credits:3, grade:"A" });
+      if (render) renderCourseList();
+    }
+
+    function removeCourse(i) {
+      courses.splice(i,1);
+      renderCourseList();
+      if (lastGPA) calculateGPA();
+    }
+
+    function updateCourse(i, field, value) {
+      courses[i][field] = field === "credits" ? Number(value) : value;
+      if (lastGPA) calculateGPA();
+    }
+
+    function renderCourseList() {
+      const el = document.getElementById("courseList");
+      if (!courses.length) {
+        el.innerHTML = `<p class="meta text-center py-3">No courses added yet.</p>`;
+        return;
+      }
+      el.innerHTML = courses.map((c,i) => `
+        <div class="course-row">
+          <input class="form-control form-control-sm" placeholder="Course name (optional)"
+            value="${escapeHTML(c.name)}" oninput="updateCourse(${i},'name',this.value)">
+          <input class="form-control form-control-sm" type="number" min="1" max="6" step="1"
+            value="${c.credits}" oninput="updateCourse(${i},'credits',this.value)">
+          <select class="form-select form-select-sm" onchange="updateCourse(${i},'grade',this.value)">
+            ${GRADE_OPTIONS.map(g=>`<option value="${g}"${c.grade===g?" selected":""}>${g}</option>`).join("")}
+          </select>
+          <button class="btn btn-sm" style="background:#fee2e2;color:#991b1b;border:0;border-radius:10px;width:36px;"
+            onclick="removeCourse(${i})">✕</button>
+        </div>`).join("");
+    }
+
+    function clearCourses() {
+      courses = [];
+      lastGPA = null;
+      renderCourseList();
+      document.getElementById("resultCard").style.display = "none";
+    }
+
+    async function calculateGPA() {
+      const valid = courses.filter(c => c.credits > 0 && GRADE_POINTS[c.grade] !== undefined);
+      if (!valid.length) {
+        showToast("Please add at least one course with valid credits and grade.", "error");
+        return;
+      }
+
+      const totalPoints  = valid.reduce((s,c) => s + GRADE_POINTS[c.grade] * c.credits, 0);
+      const totalCredits = valid.reduce((s,c) => s + c.credits, 0);
+      const gpa          = totalPoints / totalCredits;
+
+      lastGPA = { gpa, totalCredits, courses: JSON.parse(JSON.stringify(valid)) };
+
+      /* Cumulative CGPA from saved history */
+      const history    = await loadHistory();
+      const pastPoints = history.reduce((s,h) => s + h.gpa * h.credits, 0);
+      const pastCreds  = history.reduce((s,h) => s + h.credits, 0);
+      const cgpa       = pastCreds > 0
+        ? ((pastPoints + totalPoints) / (pastCreds + totalCredits)).toFixed(2)
+        : gpa.toFixed(2);
+
+      document.getElementById("resultGPA").textContent     = gpa.toFixed(2);
+      document.getElementById("resultCredits").textContent = totalCredits;
+      document.getElementById("resultCGPA").textContent    = cgpa;
+      document.getElementById("resultGrade").textContent   = gradeLabel(gpa);
+      document.getElementById("resultCard").style.display  = "block";
+
+      /* Action buttons */
+      const loggedIn = isLoggedIn();
+      document.getElementById("resultActions").innerHTML = loggedIn
+        ? `<button class="btn btn-primary" onclick="saveToHistory()">Save This Semester</button>
+           <button class="btn btn-outline-primary" onclick="showTab('whatif')">Try What If?</button>`
+        : `<a href="login.html" class="btn btn-primary">Login to Save</a>
+           <button class="btn btn-outline-primary" onclick="showTab('whatif')">Try What If?</button>`;
+
+      document.getElementById("resultCard").scrollIntoView({ behavior:"smooth", block:"nearest" });
+    }
+
+    async function saveToHistory() {
+      if (!lastGPA) { showToast("Calculate GPA first.", "error"); return; }
+
+      const history = await loadHistory();
+      const rawLabel = document.getElementById("semLabel")?.value.trim();
+      const label    = rawLabel || `Semester ${history.length + 1}`;
+
+      try {
+        await saveNewSemester({
+          label,
+          gpa:     parseFloat(lastGPA.gpa.toFixed(2)),
+          credits: lastGPA.totalCredits,
+          courses: lastGPA.courses
+        });
+        showToast(`"${label}" saved successfully!`, "success");
+        if (document.getElementById("semLabel")) {
+          document.getElementById("semLabel").value = "";
+        }
+      } catch (err) {
+        showToast(err.message || "Failed to save semester.", "error");
+      }
+    }
+
+    /* =============================================
+       TAB 2 — SEMESTER HISTORY
+    ============================================= */
+    async function renderHistory() {
+      const history  = await loadHistory();
+      const listEl   = document.getElementById("historyList");
+      const summaryEl = document.getElementById("historySummary");
+      const chartWrap = document.getElementById("chartWrap");
+
+      if (!history.length) {
+        listEl.innerHTML = `
+          <div class="empty-state">
+            <h5 class="fw-bold mb-2">No history yet</h5>
+            <p class="mb-3">${isLoggedIn()
+              ? "Calculate your GPA and click \"Save This Semester\" to start tracking."
+              : "Login and save semesters to track your progress here."}</p>
+            <button class="btn btn-primary" onclick="showTab('calc')">Go to Calculator</button>
+          </div>`;
+        summaryEl.style.display = "none";
+        chartWrap.style.display = "none";
+        return;
+      }
+
+      const gpas     = history.map(s => s.gpa);
+      const highest  = Math.max(...gpas).toFixed(2);
+      const lowest   = Math.min(...gpas).toFixed(2);
+      const totalPts = history.reduce((s,h) => s + h.gpa * h.credits, 0);
+      const totalCr  = history.reduce((s,h) => s + h.credits, 0);
+      const cgpa     = (totalPts / totalCr).toFixed(2);
+
+      let trend = "—", trendClass = "trend-flat";
+      if (history.length >= 2) {
+        const diff = gpas[gpas.length-1] - gpas[gpas.length-2];
+        if (diff > 0.01)      { trend = "↑ Improving"; trendClass = "trend-up"; }
+        else if (diff < -0.01){ trend = "↓ Declining"; trendClass = "trend-down"; }
+        else                  { trend = "→ Steady";    trendClass = "trend-flat"; }
+      }
+
+      document.getElementById("statHighest").textContent = highest;
+      document.getElementById("statLowest").textContent  = lowest;
+      document.getElementById("statCGPA").textContent    = cgpa;
+      document.getElementById("statTrend").innerHTML     = `<span class="${trendClass}">${trend}</span>`;
+      summaryEl.style.display = "flex";
+      chartWrap.style.display = "block";
+
+      /* Chart */
+      if (trendChartInst) trendChartInst.destroy();
+      const ctx = document.getElementById("trendChart").getContext("2d");
+      trendChartInst = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: history.map(s => s.label),
+          datasets: [{
+            label: "GPA",
+            data:  history.map(s => s.gpa),
+            borderColor: "#2563eb",
+            backgroundColor: "rgba(37,99,235,0.08)",
+            borderWidth: 3,
+            pointBackgroundColor: "#2563eb",
+            pointRadius: 6,
+            pointHoverRadius: 8,
+            tension: 0.35,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: ctx => ` GPA: ${ctx.parsed.y.toFixed(2)}` } }
+          },
+          scales: {
+            y: { min:0, max:4, grid:{ color:"rgba(15,23,42,0.06)" },
+                 ticks:{ stepSize:0.5, font:{weight:"600"} } },
+            x: { grid:{ display:false }, ticks:{ font:{weight:"600"} } }
+          }
+        }
+      });
+
+      /* Semester list */
+      listEl.innerHTML = history.map((s,i) => `
+        <div class="semester-history-item">
+          <div class="d-flex align-items-center gap-3" style="flex:1;min-width:0;">
+            <div class="grade-badge">${s.gpa.toFixed(1)}</div>
+            <div style="min-width:0;">
+              <strong>${escapeHTML(s.label)}</strong>
+              <small class="meta d-block">${s.credits} credits · ${formatDate(s.date || s.createdAt)}</small>
+              ${s.courses && s.courses.length
+                ? `<small class="meta">${s.courses.map(c=>escapeHTML(c.name||"Course")).filter(Boolean).slice(0,3).join(", ")}${s.courses.length>3?"…":""}</small>`
+                : ""}
+            </div>
+          </div>
+          <div class="d-flex align-items-center gap-2 flex-shrink-0">
+            <span class="status-pill ${s.gpa>=3.5?"approved":s.gpa>=2.5?"pending":"rejected"}">
+              ${s.gpa >= 3.5 ? "Excellent" : s.gpa >= 2.5 ? "Good" : "Poor"}
+            </span>
+            <button class="btn btn-sm"
+              style="background:#fee2e2;color:#991b1b;border:0;border-radius:10px;padding:4px 10px;"
+              onclick="deleteSemester(${i})">Remove</button>
+          </div>
+        </div>`).join("");
+    }
+
+    async function deleteSemester(index) {
+      const history = await loadHistory();
+      if (!history[index]) return;
+      try {
+        await deleteSemesterById(history[index]);
+        showToast("Semester removed.", "info");
+        renderHistory();
+      } catch (err) {
+        showToast(err.message || "Failed to delete.", "error");
+      }
+    }
+
+    async function clearHistory() {
+      if (!confirm("Clear all semester history? This cannot be undone.")) return;
+      try {
+        await clearAllHistory();
+        renderHistory();
+        showToast("History cleared.", "info");
+      } catch (err) {
+        showToast(err.message || "Failed to clear.", "error");
+      }
+    }
+
+    /* =============================================
+       TAB 3 — TARGET PLANNER
+    ============================================= */
+    async function autoFillTarget() {
+      if (!isLoggedIn()) return;
+      const history = await loadHistory();
+      if (!history.length) return;
+
+      const totalPts = history.reduce((s,h) => s + h.gpa * h.credits, 0);
+      const totalCr  = history.reduce((s,h) => s + h.credits, 0);
+      const cgpa     = (totalPts / totalCr).toFixed(2);
+
+      document.getElementById("targetCurrentCGPA").value      = cgpa;
+      document.getElementById("targetCompletedCredits").value = totalCr;
+      document.getElementById("targetAutoFill").style.display = "flex";
+    }
+
+    function calculateTarget() {
+      const currentCGPA      = parseFloat(document.getElementById("targetCurrentCGPA").value);
+      const completedCredits = parseFloat(document.getElementById("targetCompletedCredits").value);
+      const targetCGPA       = parseFloat(document.getElementById("targetGoalCGPA").value);
+      const remainingCredits = parseFloat(document.getElementById("targetRemainingCredits").value);
+      const resultEl         = document.getElementById("targetResult");
+
+      if ([currentCGPA,completedCredits,targetCGPA,remainingCredits].some(isNaN)) {
+        resultEl.style.display = "block";
+        resultEl.innerHTML = `<div class="alert alert-danger rounded-4">Please fill in all four fields.</div>`;
+        return;
+      }
+      if (targetCGPA > 4.0) {
+        resultEl.style.display = "block";
+        resultEl.innerHTML = `<div class="alert alert-danger rounded-4">Target CGPA cannot exceed 4.00.</div>`;
+        return;
+      }
+
+      const totalCredits = completedCredits + remainingCredits;
+      const neededPoints = (targetCGPA * totalCredits) - (currentCGPA * completedCredits);
+      const neededGPA    = neededPoints / remainingCredits;
+
+      resultEl.style.display = "block";
+
+      if (neededGPA > 4.0) {
+        const maxReachable = Math.min(
+          ((currentCGPA * completedCredits) + (4.0 * remainingCredits)) / totalCredits, 4.0
+        ).toFixed(2);
+        resultEl.innerHTML = `
+          <div class="target-result" style="background:rgba(220,38,38,0.06);border-color:rgba(220,38,38,0.2);">
+            <h5 class="fw-bold mb-2" style="color:#dc2626;">Target Not Achievable ❌</h5>
+            <p class="meta mb-0">Even with a perfect 4.00 every semester, your CGPA can only reach <strong>${maxReachable}</strong>. Please adjust your target.</p>
+          </div>`;
+        return;
+      }
+
+      if (neededGPA <= 0) {
+        resultEl.innerHTML = `
+          <div class="target-result">
+            <h5 class="fw-bold mb-2" style="color:var(--success);">Already Achieved! 🎉</h5>
+            <p class="meta mb-0">Your current CGPA of <strong>${currentCGPA}</strong> already meets your target of <strong>${targetCGPA}</strong>. Keep it up!</p>
+          </div>`;
+        return;
+      }
+
+      const gradeNeeded = Object.entries(GRADE_POINTS).find(([,v]) => v >= neededGPA - 0.005)?.[0] || "A+";
+
+      resultEl.innerHTML = `
+        <div class="target-result">
+          <h5 class="fw-bold mb-3">Your Roadmap to ${targetCGPA} CGPA 🎯</h5>
+          <div class="row g-3">
+            <div class="col-sm-6 col-md-3">
+              <div class="dashboard-tile" style="min-height:unset;padding:14px;">
+                <span class="dashboard-tile__badge" style="font-size:0.7rem;">Need Per Semester</span>
+                <h3 style="font-size:1.6rem;">${neededGPA.toFixed(2)}</h3>
+                <p style="font-size:0.8rem;">minimum GPA</p>
+              </div>
+            </div>
+            <div class="col-sm-6 col-md-3">
+              <div class="dashboard-tile" style="min-height:unset;padding:14px;">
+                <span class="dashboard-tile__badge" style="font-size:0.7rem;">Minimum Grade</span>
+                <h3 style="font-size:1.6rem;">${gradeNeeded}</h3>
+                <p style="font-size:0.8rem;">average grade needed</p>
+              </div>
+            </div>
+            <div class="col-sm-6 col-md-3">
+              <div class="dashboard-tile" style="min-height:unset;padding:14px;">
+                <span class="dashboard-tile__badge" style="font-size:0.7rem;">Remaining Credits</span>
+                <h3 style="font-size:1.6rem;">${remainingCredits}</h3>
+                <p style="font-size:0.8rem;">credit hours left</p>
+              </div>
+            </div>
+            <div class="col-sm-6 col-md-3">
+              <div class="dashboard-tile" style="min-height:unset;padding:14px;">
+                <span class="dashboard-tile__badge" style="font-size:0.7rem;">Gap to Close</span>
+                <h3 style="font-size:1.6rem;">${(targetCGPA - currentCGPA).toFixed(2)}</h3>
+                <p style="font-size:0.8rem;">CGPA points</p>
+              </div>
+            </div>
+          </div>
+          <p class="meta mt-3 mb-0">
+            💡 You need at least <strong>${neededGPA.toFixed(2)} GPA</strong>
+            (roughly <strong>${gradeNeeded}</strong> average) across your remaining
+            <strong>${remainingCredits} credits</strong>.
+          </p>
+        </div>`;
+    }
+
+    /* =============================================
+       TAB 4 — WHAT IF SIMULATOR
+    ============================================= */
+    function renderWhatif() {
+      const emptyEl   = document.getElementById("whatifEmpty");
+      const contentEl = document.getElementById("whatifContent");
+
+      if (!lastGPA || !lastGPA.courses.length) {
+        emptyEl.style.display   = "block";
+        contentEl.style.display = "none";
+        return;
+      }
+
+      emptyEl.style.display   = "none";
+      contentEl.style.display = "block";
+      whatifCourses = JSON.parse(JSON.stringify(lastGPA.courses));
+
+      document.getElementById("whatifOriginal").textContent  = lastGPA.gpa.toFixed(2);
+      document.getElementById("whatifSimulated").textContent = lastGPA.gpa.toFixed(2);
+      document.getElementById("whatifDiff").innerHTML        = "";
+      renderWhatifList();
+    }
+
+    function renderWhatifList() {
+      document.getElementById("whatifList").innerHTML = whatifCourses.map((c,i) => `
+        <div class="course-row" style="grid-template-columns:1fr 80px 80px 100px;">
+          <span class="fw-semibold" style="font-size:0.92rem;">${escapeHTML(c.name || `Course ${i+1}`)}</span>
+          <span class="meta">${c.credits} cr</span>
+          <span class="grade-badge">${c.grade}</span>
+          <select class="form-select form-select-sm" onchange="changeWhatifGrade(${i},this.value)">
+            ${GRADE_OPTIONS.map(g=>`<option value="${g}"${c.whatifGrade===g?" selected":""}>${g}</option>`).join("")}
+          </select>
+        </div>`).join("");
+    }
+
+    function changeWhatifGrade(i, newGrade) {
+      whatifCourses[i].whatifGrade = newGrade;
+      recalcWhatif();
+    }
+
+    function recalcWhatif() {
+      const totalPoints  = whatifCourses.reduce((s,c) => s + GRADE_POINTS[c.whatifGrade||c.grade] * c.credits, 0);
+      const totalCredits = whatifCourses.reduce((s,c) => s + c.credits, 0);
+      const simGPA       = totalPoints / totalCredits;
+      const diff         = simGPA - lastGPA.gpa;
+
+      document.getElementById("whatifSimulated").textContent = simGPA.toFixed(2);
+      const diffEl = document.getElementById("whatifDiff");
+      if (Math.abs(diff) < 0.001) {
+        diffEl.innerHTML = `<small class="meta">No change from original GPA.</small>`;
+      } else if (diff > 0) {
+        diffEl.innerHTML = `<small class="trend-up fw-bold">↑ +${diff.toFixed(2)} improvement</small>`;
+      } else {
+        diffEl.innerHTML = `<small class="trend-down fw-bold">↓ ${diff.toFixed(2)} decrease</small>`;
+      }
+    }
+
+    function resetWhatif() {
+      whatifCourses.forEach(c => { delete c.whatifGrade; });
+      recalcWhatif();
+      renderWhatifList();
+    }
+
+  </script>
+</body>
+</html>

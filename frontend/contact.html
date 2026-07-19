@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact Support | MU Resource System</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+  <div id="navbarMount"></div>
+
+  <main class="section-pad">
+    <div class="container">
+      <div class="top-card mb-4">
+        <span class="ribbon">Student Support</span>
+
+        <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap mt-3">
+          <div>
+            <h2 class="fw-bold mb-2">Contact Admin Support</h2>
+            <p class="meta mb-0">Report missing resources, broken files, account issues or academic resource requests.</p>
+          </div>
+
+          <a href="announcements.html" class="btn btn-outline-primary">View Notices</a>
+        </div>
+      </div>
+
+      <div class="row g-4">
+        <div class="col-lg-7">
+          <div class="panel-card">
+            <h4 class="fw-bold mb-1">Send Support Request</h4>
+            <p class="meta mb-4">Fill in the form below and admin will review your request.</p>
+
+            <form id="contactForm">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Name</label>
+                  <input id="name" class="form-control" placeholder="Your name" required>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Email</label>
+                  <input id="email" type="email" class="form-control" placeholder="student@example.com" required>
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label fw-semibold">Issue Type</label>
+                  <select id="type" class="form-select" required>
+                    <option value="">Select issue</option>
+                    <option value="Missing Notes">Missing Notes</option>
+                    <option value="Broken File">Broken File</option>
+                    <option value="Account Problem">Account Problem</option>
+                    <option value="Wrong Information">Wrong Information</option>
+                    <option value="Upload Problem">Upload Problem</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label fw-semibold">Message</label>
+                  <textarea id="message" class="form-control" rows="5" placeholder="Describe your problem clearly..." required></textarea>
+                  <small class="meta">Minimum 10 characters recommended.</small>
+                </div>
+              </div>
+
+              <button id="supportButton" class="btn btn-primary mt-4 px-4 py-3" type="submit">
+                Submit Support Request
+              </button>
+            </form>
+
+            <div id="formMessage" class="mt-3"></div>
+          </div>
+        </div>
+
+        <div class="col-lg-5">
+          <div class="panel-card h-100">
+            <h4 class="fw-bold mb-3">Support Information</h4>
+
+            <div class="notice-box mb-3">
+              <h6 class="fw-bold">Admin Office</h6>
+              <p class="meta mb-0">Academic Resource Management Department</p>
+            </div>
+
+            <div class="notice-box mb-3">
+              <h6 class="fw-bold">Support Email</h6>
+              <p class="meta mb-0">admin@mu-resource.local</p>
+            </div>
+
+            <div class="notice-box mb-3">
+              <h6 class="fw-bold">Response Time</h6>
+              <p class="meta mb-0">Usually within 24-48 academic hours.</p>
+            </div>
+
+            <div class="notice-box">
+              <h6 class="fw-bold">Before Contacting</h6>
+              <p class="meta mb-0">
+                Please check Notes, PYQ and Announcements pages first. If your issue still exists, submit a request.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="footerMount"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/common.js"></script>
+
+  <script>
+    renderNavbar();
+    renderFooter();
+
+    const currentUser = getUser();
+
+    if (currentUser) {
+      document.getElementById("name").value = currentUser.name || "";
+      document.getElementById("email").value = currentUser.email || "";
+    }
+
+    document.getElementById("contactForm").addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      const button = document.getElementById("supportButton");
+      const formMessage = document.getElementById("formMessage");
+
+      const payload = {
+        name: document.getElementById("name").value.trim(),
+        email: document.getElementById("email").value.trim(),
+        type: document.getElementById("type").value,
+        message: document.getElementById("message").value.trim()
+      };
+
+      formMessage.innerHTML = "";
+
+      if (!payload.name || !payload.email || !payload.type || !payload.message) {
+        showToast("Please fill all required fields.", "warning");
+        return;
+      }
+
+      if (payload.message.length < 10) {
+        showToast("Please write at least 10 characters in your message.", "warning");
+        return;
+      }
+
+      button.disabled = true;
+      button.textContent = "Submitting request...";
+
+      try {
+        const data = await apiFetch("/support", {
+          method: "POST",
+          headers: authHeaders(),
+          body: JSON.stringify(payload)
+        });
+
+        this.reset();
+
+        if (currentUser) {
+          document.getElementById("name").value = currentUser.name || "";
+          document.getElementById("email").value = currentUser.email || "";
+        }
+
+        showToast(data.message || "Support request submitted successfully.", "success");
+
+        formMessage.innerHTML = `
+          <div class="alert alert-success rounded-4">
+            ${escapeHTML(data.message || "Support request submitted successfully.")}
+          </div>
+        `;
+      } catch (error) {
+        const requests = JSON.parse(localStorage.getItem("supportRequests") || "[]");
+        requests.push({
+          ...payload,
+          status: "saved-locally",
+          createdAt: new Date().toISOString()
+        });
+        localStorage.setItem("supportRequests", JSON.stringify(requests));
+
+        showToast("Support request saved locally. Please try again when backend is available.", "warning");
+
+        formMessage.innerHTML = `
+          <div class="alert alert-warning rounded-4">
+            Support request saved locally. Please try again when backend is available.
+          </div>
+        `;
+      } finally {
+        button.disabled = false;
+        button.textContent = "Submit Support Request";
+      }
+    });
+  </script>
+</body>
+</html>

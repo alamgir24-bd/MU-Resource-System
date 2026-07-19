@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Users | MU Resource System</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+  <div id="navbarMount"></div>
+
+  <main class="dashboard-page">
+    <div class="container">
+      <div class="row g-4">
+        <div class="col-lg-3">
+          <div id="sidebarMount"></div>
+        </div>
+
+        <div class="col-lg-9">
+          <div class="top-card mb-4">
+            <span class="ribbon">Admin Management</span>
+            <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap mt-3">
+              <div>
+                <h2 class="fw-bold mb-2">Manage Users</h2>
+                <p class="meta mb-0">Search students/admins, activate/block users and create admin accounts.</p>
+              </div>
+
+              <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createAdminModal">
+                Create Admin
+              </button>
+            </div>
+          </div>
+
+          <div class="panel-card mb-4">
+            <form id="filterForm" class="row g-3 align-items-end">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Search</label>
+                <input id="search" class="form-control" placeholder="Name, email, department, batch, student ID">
+              </div>
+
+              <div class="col-md-3">
+                <label class="form-label fw-semibold">Role</label>
+                <select id="role" class="form-select">
+                  <option value="">All</option>
+                  <option value="student">Student</option>
+                  <option value="alumni">Alumni</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+
+              <div class="col-md-3 d-flex gap-2">
+                <button class="btn btn-primary flex-fill">Search</button>
+                <button type="button" class="btn btn-outline-primary" onclick="resetFilters()">Reset</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="panel-card">
+            <div id="messageBox"></div>
+
+            <div class="table-responsive">
+              <table class="table align-middle">
+                <thead>
+                  <tr>
+                    <th>User</th>
+                    <th>Department</th>
+                    <th>Batch</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Joined</th>
+                    <th class="text-end">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="userTableBody">
+                  <tr>
+                    <td colspan="7">
+                      <div class="empty-state">Loading users...</div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div id="paginationMount"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="modal fade" id="createAdminModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold">Create Admin Account</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <form id="createAdminForm">
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Name</label>
+              <input id="adminName" class="form-control" placeholder="Admin name" required>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Email</label>
+              <input id="adminEmail" type="email" class="form-control" placeholder="admin@example.com" required>
+            </div>
+
+            <div>
+              <label class="form-label fw-semibold">Password</label>
+              <input id="adminPassword" type="password" class="form-control" placeholder="Minimum 6 characters" minlength="6" required>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">Cancel</button>
+            <button id="createAdminButton" class="btn btn-primary">Create Admin</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="footerMount"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/common.js"></script>
+
+  <script>
+    ensureAdmin();
+    renderNavbar("dashboard");
+    renderSidebar("users");
+    renderFooter();
+
+    let currentPage = 1;
+
+    function safeJs(value = "") {
+      return String(value)
+        .replace(/\\/g, "\\\\")
+        .replace(/'/g, "\\'")
+        .replace(/\n/g, " ")
+        .replace(/\r/g, " ");
+    }
+
+    function getFilters(page = currentPage) {
+      const params = new URLSearchParams();
+      params.set("page", page);
+      params.set("limit", "10");
+
+      const search = document.getElementById("search").value.trim();
+      const role = document.getElementById("role").value;
+
+      if (search) params.set("search", search);
+      if (role) params.set("role", role);
+
+      return params.toString();
+    }
+
+    async function loadUsers(page = 1) {
+      currentPage = page;
+
+      document.getElementById("userTableBody").innerHTML = `
+        <tr>
+          <td colspan="7">
+            <div class="empty-state">Loading users...</div>
+          </td>
+        </tr>
+      `;
+
+      try {
+        const data = await apiFetch(`/users?${getFilters(page)}`, {
+          headers: authHeaders(false)
+        });
+
+        const users = data.items || data || [];
+
+        if (!users.length) {
+          document.getElementById("userTableBody").innerHTML = `
+            <tr>
+              <td colspan="7">
+                <div class="empty-state">
+                  <h5 class="fw-bold mb-2">No users found</h5>
+                  <p class="mb-0">Try changing the search keyword or role filter.</p>
+                </div>
+              </td>
+            </tr>
+          `;
+
+          document.getElementById("paginationMount").innerHTML = "";
+          return;
+        }
+
+        document.getElementById("userTableBody").innerHTML = users.map(renderUserRow).join("");
+
+        renderPagination({
+          mountId: "paginationMount",
+          page: data.page || 1,
+          totalPages: data.totalPages || 1,
+          onPageChange: "loadUsers"
+        });
+      } catch (error) {
+        document.getElementById("userTableBody").innerHTML = `
+          <tr>
+            <td colspan="7">
+              <div class="alert alert-danger rounded-4">${escapeHTML(error.message || "Unable to load users.")}</div>
+            </td>
+          </tr>
+        `;
+
+        showToast(error.message || "Unable to load users.", "error");
+      }
+    }
+
+    function renderUserRow(user) {
+      const userId = user._id || user.id;
+      const status = user.status || "active";
+      const role = user.role || "student";
+      const name = user.name || "Unknown";
+      const safeName = safeJs(name);
+      const isBlocked = status === "blocked";
+      const isPending = status === "pending";
+
+      /* Status action button */
+      let statusBtn = "";
+      if (isPending) {
+        statusBtn = `<button class="btn btn-success btn-sm" onclick="confirmUserStatus('${userId}', 'active', '${safeName}')">Approve</button>`;
+      } else if (isBlocked) {
+        statusBtn = `<button class="btn btn-success btn-sm" onclick="confirmUserStatus('${userId}', 'active', '${safeName}')">Activate</button>`;
+      } else {
+        statusBtn = `<button class="btn btn-warning btn-sm" onclick="confirmUserStatus('${userId}', 'blocked', '${safeName}')">Block</button>`;
+      }
+
+      /* Role action button — only students can be promoted to alumni */
+      let roleBtn = "";
+      if (role === "student") {
+        roleBtn = `<button class="btn btn-outline-primary btn-sm" onclick="confirmMakeAlumni('${userId}', '${safeName}')">Make Alumni</button>`;
+      } else if (role === "alumni") {
+        roleBtn = `<button class="btn btn-outline-primary btn-sm" onclick="confirmMakeStudent('${userId}', '${safeName}')">Revert to Student</button>`;
+      }
+
+      return `
+        <tr>
+          <td>
+            <div class="d-flex align-items-center gap-3">
+              ${renderAvatar(user.profileImage, user.name, 42)}
+              <div>
+                <h6 class="fw-bold mb-0">${escapeHTML(name)}</h6>
+                <small class="meta">${escapeHTML(user.email || "")}</small>
+                ${user.studentId ? `<br><small class="meta">ID: ${escapeHTML(user.studentId)}</small>` : ""}
+              </div>
+            </div>
+          </td>
+
+          <td>${escapeHTML(user.department || "-")}</td>
+          <td>${escapeHTML(user.batch || "-")}</td>
+          <td><span class="dashboard-tile__badge">${escapeHTML(role)}</span></td>
+          <td><span class="status-pill ${escapeHTML(status)}">${escapeHTML(status)}</span></td>
+          <td>${formatDate(user.createdAt)}</td>
+
+          <td class="text-end">
+            <div class="d-flex justify-content-end gap-2 flex-wrap">
+              ${statusBtn}
+              ${roleBtn}
+              <button class="btn btn-danger btn-sm" onclick="confirmDeleteUser('${userId}', '${safeName}')">Delete</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }
+
+    function confirmUserStatus(id, status, name) {
+      const isActivate = status === "active";
+
+      confirmAction(
+        `Are you sure you want to ${isActivate ? "activate" : "block"} "${name}"?`,
+        function () {
+          updateUserStatus(id, status);
+        },
+        {
+          title: isActivate ? "Activate User" : "Block User",
+          confirmText: isActivate ? "Activate" : "Block",
+          cancelText: "Cancel",
+          confirmButtonClass: isActivate ? "btn-success" : "btn-warning"
+        }
+      );
+    }
+
+    async function updateUserStatus(id, status) {
+      try {
+        const data = await apiFetch(`/users/${id}/status`, {
+          method: "PATCH",
+          headers: authHeaders(),
+          body: JSON.stringify({ status })
+        });
+
+        showToast(data.message || `User ${status === "active" ? "activated" : "blocked"} successfully.`, "success");
+        loadUsers(currentPage);
+      } catch (error) {
+        showToast(error.message || "Unable to update user status.", "error");
+      }
+    }
+
+    function confirmMakeAlumni(id, name) {
+      confirmAction(
+        `Promote "${name}" to Alumni? They will be able to post jobs and mentor students.`,
+        function () { updateUserRole(id, "alumni"); },
+        {
+          title: "Make Alumni",
+          confirmText: "Make Alumni",
+          cancelText: "Cancel",
+          confirmButtonClass: "btn-primary"
+        }
+      );
+    }
+
+    function confirmMakeStudent(id, name) {
+      confirmAction(
+        `Revert "${name}" back to a Student account?`,
+        function () { updateUserRole(id, "student"); },
+        {
+          title: "Revert to Student",
+          confirmText: "Revert",
+          cancelText: "Cancel",
+          confirmButtonClass: "btn-warning"
+        }
+      );
+    }
+
+    async function updateUserRole(id, role) {
+      try {
+        const data = await apiFetch(`/users/${id}/role`, {
+          method: "PATCH",
+          headers: authHeaders(),
+          body: JSON.stringify({ role })
+        });
+
+        showToast(data.message || `User role changed to ${role}.`, "success");
+        loadUsers(currentPage);
+      } catch (error) {
+        showToast(error.message || "Unable to change user role.", "error");
+      }
+    }
+
+    function confirmDeleteUser(id, name) {
+      confirmAction(
+        `Are you sure you want to delete "${name}"? This action cannot be undone.`,
+        function () {
+          deleteUser(id);
+        },
+        {
+          title: "Delete User",
+          confirmText: "Delete",
+          cancelText: "Cancel",
+          confirmButtonClass: "btn-danger"
+        }
+      );
+    }
+
+    async function deleteUser(id) {
+      try {
+        const data = await apiFetch(`/users/${id}`, {
+          method: "DELETE",
+          headers: authHeaders(false)
+        });
+
+        showToast(data.message || "User deleted successfully.", "success");
+        loadUsers(currentPage);
+      } catch (error) {
+        showToast(error.message || "Unable to delete user.", "error");
+      }
+    }
+
+    function resetFilters() {
+      document.getElementById("filterForm").reset();
+      showToast("User filters reset.", "info");
+      loadUsers(1);
+    }
+
+    document.getElementById("filterForm").addEventListener("submit", function (event) {
+      event.preventDefault();
+      loadUsers(1);
+    });
+
+    document.getElementById("createAdminForm").addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      const button = document.getElementById("createAdminButton");
+
+      const payload = {
+        name: document.getElementById("adminName").value.trim(),
+        email: document.getElementById("adminEmail").value.trim(),
+        password: document.getElementById("adminPassword").value
+      };
+
+      if (payload.password.length < 6) {
+        showToast("Admin password must be at least 6 characters.", "warning");
+        return;
+      }
+
+      button.disabled = true;
+      button.textContent = "Creating...";
+
+      try {
+        const data = await apiFetch("/users/admin", {
+          method: "POST",
+          headers: authHeaders(),
+          body: JSON.stringify(payload)
+        });
+
+        this.reset();
+
+        const modal = bootstrap.Modal.getInstance(document.getElementById("createAdminModal"));
+        if (modal) modal.hide();
+
+        showToast(data.message || "Admin created successfully.", "success");
+        loadUsers(1);
+      } catch (error) {
+        showToast(error.message || "Unable to create admin.", "error");
+      } finally {
+        button.disabled = false;
+        button.textContent = "Create Admin";
+      }
+    });
+
+    loadUsers();
+  </script>
+</body>
+</html>

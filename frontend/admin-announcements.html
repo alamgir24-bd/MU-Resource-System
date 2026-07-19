@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Announcements | MU Resource System</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+  <div id="navbarMount"></div>
+
+  <main class="dashboard-page">
+    <div class="container">
+      <div class="row g-4">
+        <div class="col-lg-3">
+          <div id="sidebarMount"></div>
+        </div>
+
+        <div class="col-lg-9">
+          <div class="top-card mb-4">
+            <span class="ribbon">Announcement Manager</span>
+
+            <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap mt-3">
+              <div>
+                <h2 class="fw-bold mb-2">Manage Announcements</h2>
+                <p class="meta mb-0">Create, edit and delete important academic notices for students.</p>
+              </div>
+
+              <button class="btn btn-outline-primary" onclick="loadAnnouncements()">
+                Refresh
+              </button>
+            </div>
+          </div>
+
+          <div class="panel-card mb-4">
+            <h3 class="fw-bold mb-1" id="formTitle">Post Announcement</h3>
+            <p class="meta mb-4">Students will see new announcements on the announcement page.</p>
+
+            <form id="announcementForm">
+              <input type="hidden" id="editId">
+
+              <div class="row g-3">
+                <div class="col-12">
+                  <label class="form-label fw-semibold">Title</label>
+                  <input
+                    type="text"
+                    id="title"
+                    class="form-control"
+                    placeholder="Example: Midterm exam routine published"
+                    required
+                  >
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label fw-semibold">Description</label>
+                  <textarea
+                    id="description"
+                    class="form-control"
+                    rows="4"
+                    placeholder="Write announcement details..."
+                    required
+                  ></textarea>
+                </div>
+              </div>
+
+              <div class="d-flex gap-2 mt-4 flex-wrap">
+                <button id="saveAnnouncementButton" type="submit" class="btn btn-primary px-4 py-3">
+                  Save Announcement
+                </button>
+
+                <button type="button" class="btn btn-outline-secondary px-4 py-3" onclick="resetForm()">
+                  Cancel Edit
+                </button>
+              </div>
+            </form>
+
+            <div id="message" class="mt-3"></div>
+          </div>
+
+          <div class="panel-card">
+            <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap mb-4">
+              <div>
+                <h3 class="fw-bold mb-1">All Announcements</h3>
+                <p class="meta mb-0">Manage all announcements published by admin.</p>
+              </div>
+            </div>
+
+            <div id="announcementList"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="footerMount"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/common.js"></script>
+
+  <script>
+    ensureAdmin();
+    renderNavbar("dashboard");
+    renderSidebar("announcements");
+    renderFooter();
+
+    const form = document.getElementById("announcementForm");
+
+    function safeJs(value = "") {
+      return String(value)
+        .replace(/\\/g, "\\\\")
+        .replace(/'/g, "\\'")
+        .replace(/\n/g, " ")
+        .replace(/\r/g, " ");
+    }
+
+    form.addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      const editId = document.getElementById("editId").value;
+      const title = document.getElementById("title").value.trim();
+      const description = document.getElementById("description").value.trim();
+      const button = document.getElementById("saveAnnouncementButton");
+      const message = document.getElementById("message");
+
+      message.innerHTML = "";
+
+      if (!title) {
+        showToast("Announcement title is required.", "warning");
+        return;
+      }
+
+      if (!description) {
+        showToast("Announcement description is required.", "warning");
+        return;
+      }
+
+      button.disabled = true;
+      button.textContent = editId ? "Updating..." : "Saving...";
+
+      try {
+        const path = editId ? `/announcements/${editId}` : "/announcements";
+        const method = editId ? "PUT" : "POST";
+
+        const result = await apiFetch(path, {
+          method,
+          headers: authHeaders(),
+          body: JSON.stringify({
+            title,
+            description
+          })
+        });
+
+        showToast(
+          result.message || (editId ? "Announcement updated successfully." : "Announcement created successfully."),
+          "success"
+        );
+
+        resetForm();
+        loadAnnouncements();
+      } catch (error) {
+        showToast(error.message || "Unable to save announcement.", "error");
+      } finally {
+        button.disabled = false;
+        button.textContent = "Save Announcement";
+      }
+    });
+
+    async function loadAnnouncements() {
+      const box = document.getElementById("announcementList");
+
+      box.innerHTML = `
+        <div class="empty-state">
+          Loading announcements...
+        </div>
+      `;
+
+      try {
+        const data = await apiFetch("/announcements");
+        const items = Array.isArray(data) ? data : [];
+
+        if (!items.length) {
+          box.innerHTML = `
+            <div class="empty-state">
+              <h5 class="fw-bold mb-2">No announcements available</h5>
+              <p class="mb-0">Create a new announcement using the form above.</p>
+            </div>
+          `;
+          return;
+        }
+
+        box.innerHTML = items.map(renderAnnouncementRow).join("");
+      } catch (error) {
+        box.innerHTML = `
+          <div class="alert alert-danger rounded-4">
+            ${escapeHTML(error.message || "Failed to load announcements.")}
+          </div>
+        `;
+
+        showToast(error.message || "Failed to load announcements.", "error");
+      }
+    }
+
+    function renderAnnouncementRow(item) {
+      const safeTitle = safeJs(item.title || "Announcement");
+      const encodedItem = encodeURIComponent(JSON.stringify({
+        _id: item._id,
+        title: item.title || "",
+        description: item.description || item.message || ""
+      }));
+
+      return `
+        <div class="item-row d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+          <div>
+            <h5 class="fw-bold mb-1">${escapeHTML(item.title || "Announcement")}</h5>
+            <div class="meta mb-1">${escapeHTML(item.description || item.message || "")}</div>
+            <small class="small-note">Published: ${formatDate(item.createdAt)}</small>
+          </div>
+
+          <div class="d-flex gap-2 flex-wrap">
+            <button class="btn btn-outline-primary" onclick="editAnnouncementFromEncoded('${encodedItem}')">
+              Edit
+            </button>
+
+            <button class="btn btn-danger" onclick="confirmDeleteAnnouncement('${item._id}', '${safeTitle}')">
+              Delete
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function editAnnouncementFromEncoded(encodedItem) {
+      const item = JSON.parse(decodeURIComponent(encodedItem));
+      editAnnouncement(item);
+    }
+
+    function editAnnouncement(item) {
+      document.getElementById("formTitle").textContent = "Edit Announcement";
+      document.getElementById("editId").value = item._id;
+      document.getElementById("title").value = item.title || "";
+      document.getElementById("description").value = item.description || item.message || "";
+
+      showToast("Edit mode enabled. Update the form and save.", "info");
+
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+      });
+    }
+
+    function resetForm() {
+      document.getElementById("formTitle").textContent = "Post Announcement";
+      form.reset();
+      document.getElementById("editId").value = "";
+      document.getElementById("message").innerHTML = "";
+      document.getElementById("saveAnnouncementButton").textContent = "Save Announcement";
+    }
+
+    function confirmDeleteAnnouncement(id, title) {
+      confirmAction(
+        `Are you sure you want to delete "${title}"? This action cannot be undone.`,
+        function () {
+          deleteAnnouncement(id);
+        },
+        {
+          title: "Delete Announcement",
+          confirmText: "Delete",
+          cancelText: "Cancel",
+          confirmButtonClass: "btn-danger"
+        }
+      );
+    }
+
+    async function deleteAnnouncement(id) {
+      try {
+        const result = await apiFetch(`/announcements/${id}`, {
+          method: "DELETE",
+          headers: authHeaders(false)
+        });
+
+        showToast(result.message || "Announcement deleted successfully.", "success");
+        loadAnnouncements();
+      } catch (error) {
+        showToast(error.message || "Unable to delete announcement.", "error");
+      }
+    }
+
+    loadAnnouncements();
+  </script>
+</body>
+</html>

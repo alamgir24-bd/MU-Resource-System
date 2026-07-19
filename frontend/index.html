@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>MU Resource System</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+  <div id="navbarMount"></div>
+
+  <!-- =========================
+       Hero Section
+  ========================== -->
+  <section class="hero">
+    <div class="container">
+      <div class="row align-items-center g-5">
+        
+        <div class="col-lg-5">
+          <span class="badge-soft">Academic Resource Portal</span>
+
+          <h1 class="hero-title">
+            University Academic Resource Management System
+          </h1>
+
+          <p class="hero-text">
+            A web-based platform for students to access notes, previous year questions,
+            announcements, CGPA tools and academic feedback in one organized place.
+          </p>
+
+          <div class="d-flex flex-wrap gap-3 mt-4">
+            <a href="register.html" class="btn btn-light btn-lg px-4">Get Started</a>
+            <a href="#platformOverview" class="btn btn-soft-light btn-lg px-4">View Overview</a>
+          </div>
+        </div>
+
+        <div class="col-lg-7">
+          <div class="hero-overview-card hero-image-card">
+            <img id="homeHeroSlider" src="img/Slider-1.jpg" alt="Metropolitan University">
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================
+       Platform Overview
+  ========================== -->
+  <section class="section-pad" id="platformOverview">
+    <div class="container">
+      <div class="hero-overview-card platform-overview-wide">
+        <h3 class="fw-bold mb-4 text-center">Platform Overview</h3>
+
+        <div class="row g-3">
+          <div class="col-md-6 col-lg-3">
+            <div class="overview-tile h-100">
+              <span class="dashboard-tile__badge">Notes</span>
+              <h3 id="homeNotes">0</h3>
+              <p>Approved files</p>
+            </div>
+          </div>
+
+          <div class="col-md-6 col-lg-3">
+            <div class="overview-tile h-100">
+              <span class="dashboard-tile__badge">PYQ</span>
+              <h3 id="homePYQ">0</h3>
+              <p>Question papers</p>
+            </div>
+          </div>
+
+          <div class="col-md-6 col-lg-3">
+            <div class="overview-tile h-100">
+              <span class="dashboard-tile__badge">Notice</span>
+              <h3 id="homeAnnouncements">0</h3>
+              <p>Announcements</p>
+            </div>
+          </div>
+
+          <div class="col-md-6 col-lg-3">
+            <div class="overview-tile h-100">
+              <span class="dashboard-tile__badge">Tools</span>
+              <h3>5+</h3>
+              <p>Student tools</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================
+       Core Modules
+  ========================== -->
+  <section class="section-pad" id="modules">
+    <div class="container">
+      <div class="section-heading text-center">
+        <span class="ribbon">Core Modules</span>
+        <h2>Everything students need in one place</h2>
+        <p>
+          The system is designed to make academic resources easier to manage,
+          search and access.
+        </p>
+      </div>
+
+      <div class="row g-4 mt-4">
+        <div class="col-md-6 col-lg-3">
+          <div class="content-card h-100">
+            <div class="icon-box">📘</div>
+            <h5>Notes Management</h5>
+            <p>Students can browse and download academic notes department wise.</p>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+          <div class="content-card h-100">
+            <div class="icon-box">📝</div>
+            <h5>Question Archive</h5>
+            <p>Previous year questions can be stored and searched easily.</p>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+          <div class="content-card h-100">
+            <div class="icon-box">📢</div>
+            <h5>Announcements</h5>
+            <p>Important academic notices can be shared with students quickly.</p>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+          <div class="content-card h-100">
+            <div class="icon-box">📊</div>
+            <h5>Student Tools</h5>
+            <p>CGPA calculator and feedback analysis help students track progress.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================
+       Why This System
+  ========================== -->
+  <section class="section-pad bg-soft">
+    <div class="container">
+      <div class="row align-items-center g-5">
+        <div class="col-lg-6">
+          <img
+            src="img/Slider-2.jpg"
+            class="info-img"
+            alt="Academic work"
+          >
+        </div>
+
+        <div class="col-lg-6">
+          <span class="ribbon">Why this system?</span>
+          <h2 class="fw-bold mt-3">Built for academic resource organization</h2>
+
+          <p class="meta mt-3">
+            Students often need notes, questions and notices from different sources.
+            This system keeps those resources organized and accessible through a
+            simple dashboard.
+          </p>
+
+          <div class="feature-list mt-4">
+            <div>✅ Role based access for student and admin</div>
+            <div>✅ Organized notes and PYQ management</div>
+            <div>✅ Clean dashboard for quick navigation</div>
+            <div>✅ Feedback and academic support tools</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  
+  <section class="section-pad success-stories-section">
+    <div class="container">
+      <div class="section-heading text-center">
+        <span class="ribbon">Success Stories</span>
+        <h2>Students & Alumni Success Stories</h2>
+        <p>
+          Explore inspiring student and alumni achievements.
+        </p>
+      </div>
+
+      <div id="successStoriesHome" class="success-stories-grid mt-5">
+        <div class="empty-state">
+          Loading success stories...
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="footerMount"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/common.js"></script>
+
+  <script>
+    renderNavbar("home");
+    renderFooter();
+
+    const homeSliderImages = [
+      "img/Slider-1.jpg",
+      "img/Slider-2.jpg"
+    ];
+
+    let homeSliderIndex = 0;
+    const homeHeroSlider = document.getElementById("homeHeroSlider");
+
+    setInterval(() => {
+      homeSliderIndex = (homeSliderIndex + 1) % homeSliderImages.length;
+
+      homeHeroSlider.classList.add("fade-out");
+
+      setTimeout(() => {
+        homeHeroSlider.src = homeSliderImages[homeSliderIndex];
+        homeHeroSlider.classList.remove("fade-out");
+      }, 350);
+    }, 6000);
+
+    async function loadHomeStats() {
+
+      try {
+        const [notes, pyq, announcements] = await Promise.all([
+          apiFetch("/notes?status=approved&limit=1"),
+          apiFetch("/pyq?status=approved&limit=1"),
+          apiFetch("/announcements")
+        ]);
+
+        document.getElementById("homeNotes").textContent =
+          notes.total || (Array.isArray(notes) ? notes.length : 0);
+
+        document.getElementById("homePYQ").textContent =
+          pyq.total || (Array.isArray(pyq) ? pyq.length : 0);
+
+        document.getElementById("homeAnnouncements").textContent =
+          Array.isArray(announcements) ? announcements.length : 0;
+      } catch {
+        document.getElementById("homeNotes").textContent = "0";
+        document.getElementById("homePYQ").textContent = "0";
+        document.getElementById("homeAnnouncements").textContent = "0";
+      }
+    }
+
+    async function loadSuccessStoriesHome() {
+      const box = document.getElementById("successStoriesHome");
+      if (!box) return;
+
+      try {
+        const stories = await apiFetch("/success-stories");
+
+        const items = Array.isArray(stories)
+          ? stories
+          : Array.isArray(stories.items)
+            ? stories.items
+            : [];
+
+        if (!items.length) {
+          box.innerHTML = `
+            <div class="empty-state success-empty-state">
+              <h5 class="fw-bold mb-2">No success stories available</h5>
+              <p class="mb-0">
+                Admin can add student and alumni success stories from the dashboard.
+              </p>
+            </div>
+          `;
+          return;
+        }
+
+        box.innerHTML = items.slice(0, 8).map(story => {
+          const studentImage = story.studentImage ? getFileUrl(story.studentImage) : "";
+          const companyLogo = story.companyLogo ? getFileUrl(story.companyLogo) : "";
+          const profileLink = story.profileLink || "";
+
+          const cardInner = `
+            <div class="success-story-card">
+              <div class="success-story-image-wrap">
+                ${
+                  studentImage
+                    ? `<img src="${studentImage}" alt="${escapeHTML(story.name || "Student")}" class="success-story-image">`
+                    : `<div class="success-story-image-placeholder">${escapeHTML(String(story.name || "S").charAt(0).toUpperCase())}</div>`
+                }
+
+                ${
+                  companyLogo
+                    ? `<div class="success-company-logo-wrap">
+                        <img src="${companyLogo}" alt="${escapeHTML(story.company || "Company")}" class="success-company-logo">
+                      </div>`
+                    : ""
+                }
+              </div>
+
+              <div class="success-story-body">
+                <h5>${escapeHTML(story.name || "Unnamed Student")}</h5>
+                <p class="success-designation">
+                  ${escapeHTML(story.designation || "Student")}
+                </p>
+                <p class="success-company">
+                  ${escapeHTML(story.company || "")}
+                </p>
+              </div>
+            </div>
+          `;
+
+          if (profileLink) {
+            return `
+              <a href="${escapeHTML(profileLink)}" target="_blank" rel="noopener noreferrer" class="success-story-link">
+                ${cardInner}
+              </a>
+            `;
+          }
+
+          return cardInner;
+        }).join("");
+      } catch {
+        box.innerHTML = `
+          <div class="empty-state success-empty-state">
+            <h5 class="fw-bold mb-2">Unable to load success stories</h5>
+            <p class="mb-0">Please try again later.</p>
+          </div>
+        `;
+      }
+    }
+
+    loadHomeStats();
+    loadSuccessStoriesHome();
+  </script>
+</body>
+</html>

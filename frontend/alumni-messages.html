@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Messages | MU Resource System</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+  <div id="navbarMount"></div>
+
+  <main class="dashboard-page">
+    <div class="container">
+      <div class="row g-4">
+
+        <div class="col-lg-3">
+          <div id="sidebarMount"></div>
+        </div>
+
+        <div class="col-lg-9">
+          <div class="top-card mb-4">
+            <span class="ribbon">Mentorship</span>
+            <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap mt-3">
+              <div>
+                <h2 class="fw-bold mb-2">Messages</h2>
+                <p class="meta mb-0">Student questions and mentorship requests sent to you.</p>
+              </div>
+              <button class="btn btn-outline-primary" onclick="loadInbox()">Refresh</button>
+            </div>
+          </div>
+
+          <div class="row g-4">
+            <div class="col-lg-4">
+              <div class="panel-card" style="min-height:500px;">
+                <h5 class="fw-bold mb-3">Conversations</h5>
+                <div id="inboxList"></div>
+              </div>
+            </div>
+
+            <div class="col-lg-8">
+              <div class="panel-card" style="min-height:500px;display:flex;flex-direction:column;">
+                <div id="conversationHeader" class="mb-3">
+                  <h5 class="fw-bold mb-1">Select a conversation</h5>
+                  <p class="meta mb-0">Choose a student from the list to view messages.</p>
+                </div>
+
+                <div id="conversationThread" style="flex:1;overflow-y:auto;max-height:360px;padding:4px;margin-bottom:16px;">
+                  <div class="empty-state">
+                    <p class="mb-0">No conversation selected.</p>
+                  </div>
+                </div>
+
+                <div id="replyArea" style="display:none;">
+                  <div id="replyAlert"></div>
+                  <textarea id="replyText" class="form-control mb-2" rows="3" placeholder="Write your reply…"></textarea>
+                  <div class="d-flex justify-content-end">
+                    <button class="btn btn-primary" id="replyBtn" onclick="sendReply()">Send Reply</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <div id="footerMount"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/common.js"></script>
+  <script>
+    let activeUserId   = null;
+    let activeUserName = "";
+
+    document.addEventListener("DOMContentLoaded", () => {
+      ensureLoggedIn();
+      const user = getUser();
+      if (user && user.role !== "alumni") {
+        window.location.href = "dashboard.html";
+        return;
+      }
+      renderNavbar("messages");
+      renderSidebar("messages");
+      renderFooter();
+      loadInbox();
+    });
+
+    async function loadInbox() {
+      document.getElementById("inboxList").innerHTML = `
+        <div class="text-center py-3">
+          <div class="spinner-border spinner-border-sm text-primary"></div>
+        </div>`;
+      try {
+        const inbox = await apiFetch("/messages/inbox", { headers: authHeaders() });
+        const list  = Array.isArray(inbox) ? inbox : [];
+
+        if (!list.length) {
+          document.getElementById("inboxList").innerHTML = `
+            <div class="empty-state"><p class="mb-0">No messages yet.</p></div>`;
+          return;
+        }
+
+        document.getElementById("inboxList").innerHTML = list.map(conv => {
+          const u      = conv.user || {};
+          const userId = u._id || u.id || "";
+          const name   = escapeHTML(u.name || "Student");
+          const last   = escapeHTML((conv.lastMessage || "").substring(0, 45));
+          const unread = conv.unread > 0
+            ? `<span class="notify-badge">${conv.unread}</span>` : "";
+
+          return `
+            <div class="item-row" style="cursor:pointer;margin-bottom:8px;"
+              onclick="openConversation('${userId}', '${name}')">
+              <div class="d-flex align-items-center gap-2">
+                ${renderAvatar(u.profileImage, u.name, 36)}
+                <div style="flex:1;min-width:0;">
+                  <div class="d-flex align-items-center justify-content-between">
+                    <strong style="font-size:0.92rem;">${name}</strong>
+                    ${unread}
+                  </div>
+                  <small class="meta d-block"
+                    style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                    ${last}…
+                  </small>
+                </div>
+              </div>
+            </div>`;
+        }).join("");
+      } catch (err) {
+        document.getElementById("inboxList").innerHTML = `
+          <div class="empty-state">
+            <p class="mb-0">${escapeHTML(err.message || "Failed to load inbox.")}</p>
+          </div>`;
+      }
+    }
+
+    async function openConversation(userId, userName) {
+      activeUserId   = userId;
+      activeUserName = userName;
+
+      document.getElementById("conversationHeader").innerHTML = `
+        <h5 class="fw-bold mb-1">${escapeHTML(userName)}</h5>
+        <p class="meta mb-0">Conversation thread</p>`;
+
+      document.getElementById("replyArea").style.display = "block";
+      document.getElementById("replyText").value         = "";
+      document.getElementById("replyAlert").innerHTML    = "";
+
+      const thread = document.getElementById("conversationThread");
+      thread.innerHTML = `
+        <div class="text-center py-3">
+          <div class="spinner-border spinner-border-sm text-primary"></div>
+        </div>`;
+
+      try {
+        const messages    = await apiFetch(`/messages/conversation/${userId}`, { headers: authHeaders() });
+        const list        = Array.isArray(messages) ? messages : [];
+        const currentUser = getUser();
+
+        if (!list.length) {
+          thread.innerHTML = `<div class="empty-state"><p class="mb-0">No messages yet.</p></div>`;
+          return;
+        }
+
+        thread.innerHTML = list.map(msg => {
+          const isMine = msg.sender === currentUser.id || msg.sender?._id === currentUser.id;
+          return `
+            <div class="d-flex ${isMine ? "justify-content-end" : "justify-content-start"} mb-2">
+              <div style="max-width:80%;padding:10px 14px;
+                border-radius:${isMine ? "18px 18px 4px 18px" : "18px 18px 18px 4px"};
+                background:${isMine ? "var(--primary)" : "#f1f5f9"};
+                color:${isMine ? "#fff" : "var(--text)"};">
+                <p class="mb-1" style="font-size:0.93rem;">${escapeHTML(msg.body)}</p>
+                <small style="opacity:0.7;font-size:0.75rem;">${formatDate(msg.createdAt)}</small>
+              </div>
+            </div>`;
+        }).join("");
+
+        thread.scrollTop = thread.scrollHeight;
+        await loadInbox();
+      } catch (err) {
+        thread.innerHTML = `<div class="empty-state"><p class="mb-0">Could not load messages.</p></div>`;
+      }
+    }
+
+    async function sendReply() {
+      const body = document.getElementById("replyText").value.trim();
+      if (!body) {
+        showAlert("replyAlert", "danger", "Please write a reply before sending.");
+        return;
+      }
+      const btn = document.getElementById("replyBtn");
+      btn.disabled    = true;
+      btn.textContent = "Sending…";
+      try {
+        await apiFetch("/messages", {
+          method:  "POST",
+          headers: authHeaders(),
+          body:    JSON.stringify({ recipientId: activeUserId, body })
+        });
+        document.getElementById("replyText").value  = "";
+        document.getElementById("replyAlert").innerHTML = "";
+        await openConversation(activeUserId, activeUserName);
+        showToast("Reply sent.", "success");
+      } catch (err) {
+        showAlert("replyAlert", "danger", err.message || "Failed to send reply.");
+      } finally {
+        btn.disabled    = false;
+        btn.textContent = "Send Reply";
+      }
+    }
+  </script>
+</body>
+</html>

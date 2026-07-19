@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login | MU Resource System</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+  <div class="auth-layout">
+    <div class="container">
+      <div class="row align-items-center justify-content-center g-5">
+        <div class="col-lg-5">
+          <div class="panel-card">
+            <a href="index.html" class="text-primary fw-semibold">← Back to Home</a>
+
+            <h2 class="fw-bold mt-4 mb-2">Admin Login</h2>
+            <p class="meta mb-4">Access admin dashboard, approvals, users, feedback and system statistics.</p>
+
+            <form id="adminLoginForm">
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Login As</label>
+                <select id="loginRole" class="form-select">
+                  <option value="admin">Admin</option>
+                  <option value="alumni">Alumni</option>
+                </select>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Email</label>
+                <input id="email" type="email" class="form-control" placeholder="Enter your email" required>
+              </div>
+
+              <div class="mb-4">
+                <label class="form-label fw-semibold">Password</label>
+                <input id="password" type="password" class="form-control" placeholder="Enter your password" required>
+              </div>
+
+              <button class="btn btn-primary w-100 py-2">Login</button>
+            </form>
+
+            <div id="messageBox" class="mt-3"></div>
+
+            <p class="meta text-center mt-4 mb-0">
+              Student account?
+              <a href="login.html" class="fw-bold">Student Login</a>
+            </p>
+          </div>
+        </div>
+
+        <div class="col-lg-5 d-none d-lg-block">
+          <div class="hero-card">
+            <span class="ribbon">Admin Control</span>
+            <h2 class="fw-bold mt-3 mb-3">Professional resource moderation dashboard.</h2>
+            <p class="meta">
+              Review pending notes/PYQ, manage users, publish announcements and monitor dashboard statistics.
+            </p>
+
+            <div class="d-grid gap-3 mt-4">
+              <div class="action-card">
+                <strong>Approval Workflow</strong>
+                <span>Approve or reject student resource uploads.</span>
+              </div>
+
+              <div class="action-card">
+                <strong>User Management</strong>
+                <span>Search, block, activate or delete student accounts.</span>
+              </div>
+
+              <div class="action-card">
+                <strong>Dashboard Statistics</strong>
+                <span>See pending approvals and resource totals.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/common.js"></script>
+
+  <script>
+    if (isLoggedIn()) {
+      const user = getUser();
+      window.location.href = user?.role === "admin" ? "admin-dashboard.html" : "dashboard.html";
+    }
+
+    document.getElementById("adminLoginForm").addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      try {
+        const data = await apiFetch("/auth/login", {
+          method: "POST",
+          headers: authHeaders(),
+          body: JSON.stringify({ email, password })
+        });
+
+        const selectedRole = document.getElementById("loginRole").value;
+
+        if (data.role !== selectedRole) {
+          showAlert("messageBox", "warning", `This account is not registered as ${selectedRole}.`);
+          return;
+        }
+
+        localStorage.setItem(STORAGE_KEYS.token, data.token);
+        saveUser(data.user || {
+          name: data.name,
+          email,
+          role: data.role
+        });
+
+        window.location.href = selectedRole === "alumni" ? "alumni-network.html" : "admin-dashboard.html";
+      } catch (error) {
+        showAlert("messageBox", "danger", error.message || "Login failed.");
+      }
+    });
+  </script>
+</body>
+</html>

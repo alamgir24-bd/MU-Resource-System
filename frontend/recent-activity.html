@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recent Activity | MU Resource System</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+  <div id="navbarMount"></div>
+
+  <main class="dashboard-page">
+    <div class="container">
+      <div class="row g-4">
+        <div class="col-lg-3">
+          <div id="sidebarMount"></div>
+        </div>
+
+        <div class="col-lg-9">
+          <div class="top-card mb-4">
+            <span class="ribbon">Activity Report</span>
+
+            <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap mt-3">
+              <div>
+                <h2 class="fw-bold mb-2">Recent Activity</h2>
+                <p class="meta mb-0">Latest notes, PYQ, users, announcements and support activity in the system.</p>
+              </div>
+
+              <button class="btn btn-outline-primary" onclick="refreshActivity()">
+                Refresh
+              </button>
+            </div>
+          </div>
+
+          <div class="row g-4">
+            <div class="col-lg-4">
+              <div class="panel-card h-100">
+                <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+                  <h4 class="fw-bold mb-0">Recent Notes</h4>
+                  <a href="admin-notes.html" class="btn btn-outline-primary btn-sm">Manage</a>
+                </div>
+
+                <div id="recentNotes">
+                  <div class="empty-state">Loading notes...</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-lg-4">
+              <div class="panel-card h-100">
+                <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+                  <h4 class="fw-bold mb-0">Recent PYQ</h4>
+                  <a href="admin-pyq.html" class="btn btn-outline-primary btn-sm">Manage</a>
+                </div>
+
+                <div id="recentPyq">
+                  <div class="empty-state">Loading PYQ...</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-lg-4">
+              <div class="panel-card h-100">
+                <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+                  <h4 class="fw-bold mb-0">Recent Notices</h4>
+                  <a href="admin-announcements.html" class="btn btn-outline-primary btn-sm">Manage</a>
+                </div>
+
+                <div id="recentAnnouncements">
+                  <div class="empty-state">Loading announcements...</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row g-4 mt-1">
+            <div class="col-lg-6">
+              <div class="panel-card h-100">
+                <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+                  <h4 class="fw-bold mb-0">Recent Users</h4>
+                  <a href="admin-users.html" class="btn btn-outline-primary btn-sm">Manage</a>
+                </div>
+
+                <div id="recentUsers">
+                  <div class="empty-state">Loading users...</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-lg-6">
+              <div class="panel-card h-100">
+                <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+                  <h4 class="fw-bold mb-0">Recent Support</h4>
+                  <a href="contact.html" class="btn btn-outline-primary btn-sm">Support Page</a>
+                </div>
+
+                <div id="recentSupport">
+                  <div class="empty-state">Loading support...</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="footerMount"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/common.js"></script>
+
+  <script>
+    ensureAdmin();
+    renderNavbar("dashboard");
+    renderSidebar("activity");
+    renderFooter();
+
+    function safeJs(value = "") {
+      return String(value)
+        .replace(/\\/g, "\\\\")
+        .replace(/'/g, "\\'")
+        .replace(/\n/g, " ")
+        .replace(/\r/g, " ");
+    }
+
+    async function loadActivity() {
+      try {
+        const data = await apiFetch("/dashboard/recent", {
+          headers: authHeaders(false)
+        });
+
+        renderResourceList("recentNotes", data.recentNotes || [], "notes");
+        renderResourceList("recentPyq", data.recentPYQ || data.recentPyq || [], "pyq");
+        renderAnnouncementList("recentAnnouncements", data.recentAnnouncements || []);
+        renderUserList("recentUsers", data.recentUsers || []);
+        renderSupportList("recentSupport", data.recentSupport || []);
+      } catch (error) {
+        document.getElementById("recentNotes").innerHTML = `<div class="empty-state">Unable to load notes.</div>`;
+        document.getElementById("recentPyq").innerHTML = `<div class="empty-state">Unable to load PYQ.</div>`;
+        document.getElementById("recentAnnouncements").innerHTML = `<div class="empty-state">Unable to load announcements.</div>`;
+        document.getElementById("recentUsers").innerHTML = `<div class="empty-state">Unable to load users.</div>`;
+        document.getElementById("recentSupport").innerHTML = `<div class="empty-state">Unable to load support.</div>`;
+
+        showToast(error.message || "Unable to load recent activity.", "error");
+      }
+    }
+
+    function renderResourceList(id, items, type) {
+      const box = document.getElementById(id);
+
+      if (!items.length) {
+        box.innerHTML = `
+          <div class="empty-state">
+            <h6 class="fw-bold mb-1">No recent ${type.toUpperCase()}</h6>
+            <p class="mb-0">New uploads will appear here.</p>
+          </div>
+        `;
+        return;
+      }
+
+      box.innerHTML = items.slice(0, 6).map(item => {
+        const fileUrl = getFileUrl(item.filePath);
+        const status = item.status || "pending";
+        const safeTitle = safeJs(item.title || "Resource");
+
+        return `
+          <div class="item-row">
+            <div class="d-flex justify-content-between gap-2 flex-wrap mb-2">
+              <h6 class="fw-bold mb-0">${escapeHTML(item.title || "Untitled")}</h6>
+              <span class="status-pill ${escapeHTML(status)}">${escapeHTML(status)}</span>
+            </div>
+
+            <p class="meta mb-1">
+              ${escapeHTML(item.subject || "")} • ${escapeHTML(item.department || "")} ${item.semester ? "• " + escapeHTML(item.semester) : ""}
+            </p>
+
+            <small class="small-note">${formatDate(item.createdAt)}</small>
+
+            <div class="d-flex gap-2 mt-3 flex-wrap">
+              <button class="btn btn-outline-primary btn-sm" onclick="openFilePreview('${fileUrl}', '${safeTitle}')">
+                Preview
+              </button>
+
+              <a href="${type === "notes" ? "admin-notes.html" : "admin-pyq.html"}" class="btn btn-primary btn-sm">
+                Manage
+              </a>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderAnnouncementList(id, items) {
+      const box = document.getElementById(id);
+
+      if (!items.length) {
+        box.innerHTML = `<div class="empty-state">No recent announcements.</div>`;
+        return;
+      }
+
+      box.innerHTML = items.slice(0, 6).map(item => `
+        <div class="item-row">
+          <h6 class="fw-bold mb-1">${escapeHTML(item.title || "Announcement")}</h6>
+          <p class="meta mb-1">${escapeHTML(item.description || item.message || "")}</p>
+          <small class="small-note">${formatDate(item.createdAt)}</small>
+        </div>
+      `).join("");
+    }
+
+    function renderUserList(id, items) {
+      const box = document.getElementById(id);
+
+      if (!items.length) {
+        box.innerHTML = `<div class="empty-state">No recent users.</div>`;
+        return;
+      }
+
+      box.innerHTML = items.slice(0, 6).map(user => `
+        <div class="item-row">
+          <div class="d-flex align-items-center gap-3">
+            ${renderAvatar(user.profileImage, user.name, 40)}
+            <div>
+              <h6 class="fw-bold mb-0">${escapeHTML(user.name || "Unknown User")}</h6>
+              <p class="meta mb-1">${escapeHTML(user.email || "")}</p>
+              <div class="d-flex gap-2 flex-wrap">
+                <span class="dashboard-tile__badge">${escapeHTML(user.role || "student")}</span>
+                <span class="dashboard-tile__badge">${escapeHTML(user.department || "-")}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function renderSupportList(id, items) {
+      const box = document.getElementById(id);
+
+      if (!items.length) {
+        box.innerHTML = `<div class="empty-state">No recent support requests.</div>`;
+        return;
+      }
+
+      box.innerHTML = items.slice(0, 6).map(item => `
+        <div class="item-row">
+          <div class="d-flex justify-content-between gap-2 flex-wrap mb-2">
+            <h6 class="fw-bold mb-0">${escapeHTML(item.type || item.subject || "Support Request")}</h6>
+            <span class="status-pill ${escapeHTML(item.status || "open")}">${escapeHTML(item.status || "open")}</span>
+          </div>
+
+          <p class="meta mb-1">${escapeHTML(item.message || "")}</p>
+          <small class="small-note">
+            ${escapeHTML(item.name || item.userId?.name || "Unknown")} • ${formatDate(item.createdAt)}
+          </small>
+        </div>
+      `).join("");
+    }
+
+    async function refreshActivity() {
+      await loadActivity();
+      showToast("Recent activity refreshed.", "info");
+    }
+
+    loadActivity();
+  </script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+{
+  "name": "university-system",
+  "version": "2.0.0",
+  "description": "University Resource Management System",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "node backend/server.js",
+    "seed:admin": "node backend/scripts/seedAdmin.js"
+  },
+  "keywords": [
+    "university",
+    "resource",
+    "notes",
+    "pyq",
+    "mysql"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mysql2": "^3.11.0",
+    "multer": "^2.1.1",
+    "nodemailer": "^6.10.1"
+  }
+}

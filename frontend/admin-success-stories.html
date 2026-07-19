@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Success Stories | MU Resource System</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+  <div id="navbarMount"></div>
+
+  <main class="dashboard-page">
+    <div class="container">
+      <div class="row g-4">
+        <div class="col-lg-3">
+          <div id="sidebarMount"></div>
+        </div>
+
+        <div class="col-lg-9">
+          <div class="top-card mb-4">
+            <span class="ribbon">Success Stories</span>
+
+            <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap mt-3">
+              <div>
+                <h2 class="fw-bold mb-2">Manage Success Stories</h2>
+                <p class="meta mb-0">
+                  Add, update and control student or alumni success stories for homepage.
+                </p>
+              </div>
+
+              <button class="btn btn-outline-primary" onclick="loadSuccessStories()">
+                Refresh
+              </button>
+            </div>
+          </div>
+
+          <div class="panel-card mb-4">
+            <h3 class="fw-bold mb-1" id="formTitle">Add Success Story</h3>
+            <p class="meta mb-4">
+              Active stories will be displayed on the home page.
+            </p>
+
+            <form id="successStoryForm" enctype="multipart/form-data">
+              <input type="hidden" id="editId">
+
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Student / Alumni Name</label>
+                  <input
+                    type="text"
+                    id="name"
+                    class="form-control"
+                    placeholder="Example: Samia Rahman"
+                    required
+                  >
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Designation</label>
+                  <input
+                    type="text"
+                    id="designation"
+                    class="form-control"
+                    placeholder="Example: Software Engineer"
+                    required
+                  >
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Company Name</label>
+                  <input
+                    type="text"
+                    id="company"
+                    class="form-control"
+                    placeholder="Example: Google"
+                    required
+                  >
+                </div>
+
+                <div class="col-md-3">
+                  <label class="form-label fw-semibold">Status</label>
+                  <select id="status" class="form-select">
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                </div>
+
+                <div class="col-md-3">
+                  <label class="form-label fw-semibold">Order</label>
+                  <input
+                    type="number"
+                    id="sortOrder"
+                    class="form-control"
+                    value="0"
+                    min="0"
+                  >
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label fw-semibold">Profile Link Optional</label>
+                  <input
+                    type="url"
+                    id="profileLink"
+                    class="form-control"
+                    placeholder="https://linkedin.com/in/example"
+                  >
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Student Image</label>
+                  <input
+                    type="file"
+                    id="studentImage"
+                    class="form-control"
+                    accept="image/png,image/jpeg,image/jpg,image/webp"
+                  >
+                  <small class="meta d-block mt-2">
+                    JPG, PNG or WEBP. Max 3MB.
+                  </small>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Company Logo</label>
+                  <input
+                    type="file"
+                    id="companyLogo"
+                    class="form-control"
+                    accept="image/png,image/jpeg,image/jpg,image/webp"
+                  >
+                  <small class="meta d-block mt-2">
+                    JPG, PNG or WEBP. Max 3MB.
+                  </small>
+                </div>
+              </div>
+
+              <div class="d-flex gap-2 mt-4 flex-wrap">
+                <button id="saveStoryButton" type="submit" class="btn btn-primary px-4 py-3">
+                  Save Story
+                </button>
+
+                <button type="button" class="btn btn-outline-secondary px-4 py-3" onclick="resetStoryForm()">
+                  Cancel Edit
+                </button>
+              </div>
+            </form>
+
+            <div id="message" class="mt-3"></div>
+          </div>
+
+          <div class="panel-card">
+            <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap mb-4">
+              <div>
+                <h3 class="fw-bold mb-1">All Success Stories</h3>
+                <p class="meta mb-0">
+                  Manage homepage success stories from here.
+                </p>
+              </div>
+            </div>
+
+            <div id="successStoryList"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="footerMount"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/common.js"></script>
+
+  <script>
+    ensureAdmin();
+    renderNavbar("dashboard");
+    renderSidebar("success-stories");
+    renderFooter();
+
+    const form = document.getElementById("successStoryForm");
+
+    function safeJs(value = "") {
+      return String(value)
+        .replace(/\\/g, "\\\\")
+        .replace(/'/g, "\\'")
+        .replace(/\n/g, " ")
+        .replace(/\r/g, " ");
+    }
+
+    form.addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      const editId = document.getElementById("editId").value;
+      const name = document.getElementById("name").value.trim();
+      const designation = document.getElementById("designation").value.trim();
+      const company = document.getElementById("company").value.trim();
+      const status = document.getElementById("status").value;
+      const sortOrder = document.getElementById("sortOrder").value || 0;
+      const profileLink = document.getElementById("profileLink").value.trim();
+      const studentImage = document.getElementById("studentImage").files[0];
+      const companyLogo = document.getElementById("companyLogo").files[0];
+
+      const button = document.getElementById("saveStoryButton");
+
+      if (!name) {
+        showToast("Student or alumni name is required.", "warning");
+        return;
+      }
+
+      if (!designation) {
+        showToast("Designation is required.", "warning");
+        return;
+      }
+
+      if (!company) {
+        showToast("Company name is required.", "warning");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("designation", designation);
+      formData.append("company", company);
+      formData.append("status", status);
+      formData.append("sortOrder", sortOrder);
+      formData.append("profileLink", profileLink);
+
+      if (studentImage) {
+        formData.append("studentImage", studentImage);
+      }
+
+      if (companyLogo) {
+        formData.append("companyLogo", companyLogo);
+      }
+
+      button.disabled = true;
+      button.textContent = editId ? "Updating..." : "Saving...";
+
+      try {
+        const path = editId ? `/success-stories/${editId}` : "/success-stories";
+        const method = editId ? "PUT" : "POST";
+
+        const result = await apiFetch(path, {
+          method,
+          headers: authHeaders(false),
+          body: formData
+        });
+
+        showToast(
+          result.message || (editId ? "Success story updated successfully." : "Success story added successfully."),
+          "success"
+        );
+
+        resetStoryForm();
+        loadSuccessStories();
+      } catch (error) {
+        showToast(error.message || "Unable to save success story.", "error");
+      } finally {
+        button.disabled = false;
+        button.textContent = "Save Story";
+      }
+    });
+
+    async function loadSuccessStories() {
+      const box = document.getElementById("successStoryList");
+
+      box.innerHTML = `
+        <div class="empty-state">
+          Loading success stories...
+        </div>
+      `;
+
+      try {
+        const data = await apiFetch("/success-stories/admin/all", {
+          headers: authHeaders(false)
+        });
+
+        const items = Array.isArray(data) ? data : [];
+
+        if (!items.length) {
+          box.innerHTML = `
+            <div class="empty-state">
+              <h5 class="fw-bold mb-2">No success stories available</h5>
+              <p class="mb-0">Create a new success story using the form above.</p>
+            </div>
+          `;
+          return;
+        }
+
+        box.innerHTML = items.map(renderStoryRow).join("");
+      } catch (error) {
+        box.innerHTML = `
+          <div class="alert alert-danger rounded-4">
+            ${escapeHTML(error.message || "Failed to load success stories.")}
+          </div>
+        `;
+
+        showToast(error.message || "Failed to load success stories.", "error");
+      }
+    }
+
+    function renderStoryRow(item) {
+      const studentImageUrl = item.studentImage ? getFileUrl(item.studentImage) : "";
+      const companyLogoUrl = item.companyLogo ? getFileUrl(item.companyLogo) : "";
+      const safeName = safeJs(item.name || "Success Story");
+
+      const encodedItem = encodeURIComponent(JSON.stringify({
+        _id: item._id,
+        name: item.name || "",
+        designation: item.designation || "",
+        company: item.company || "",
+        profileLink: item.profileLink || "",
+        status: item.status || "active",
+        sortOrder: item.sortOrder || 0,
+        studentImage: item.studentImage || "",
+        companyLogo: item.companyLogo || ""
+      }));
+
+      return `
+        <div class="item-row">
+          <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <div class="d-flex align-items-center gap-3">
+              <div>
+                ${
+                  studentImageUrl
+                    ? `<img src="${studentImageUrl}" alt="${escapeHTML(item.name || "Student")}" class="success-admin-avatar">`
+                    : `<div class="success-admin-avatar success-admin-avatar-empty">${escapeHTML(String(item.name || "S").charAt(0).toUpperCase())}</div>`
+                }
+              </div>
+
+              <div>
+                <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                  <h5 class="fw-bold mb-0">${escapeHTML(item.name || "Unnamed")}</h5>
+                  <span class="status-pill ${item.status === "active" ? "active" : "blocked"}">
+                    ${escapeHTML(item.status || "active")}
+                  </span>
+                </div>
+
+                <div class="meta mb-1">
+                  ${escapeHTML(item.designation || "")} at ${escapeHTML(item.company || "")}
+                </div>
+
+                <small class="small-note">
+                  Order: ${Number(item.sortOrder || 0)} | Added: ${formatDate(item.createdAt)}
+                </small>
+
+                ${
+                  companyLogoUrl
+                    ? `<div class="mt-2"><img src="${companyLogoUrl}" alt="Company Logo" class="success-admin-logo"></div>`
+                    : ""
+                }
+              </div>
+            </div>
+
+            <div class="d-flex gap-2 flex-wrap">
+              <button class="btn btn-outline-primary" onclick="editStoryFromEncoded('${encodedItem}')">
+                Edit
+              </button>
+
+              <button class="btn btn-danger" onclick="confirmDeleteStory('${item._id}', '${safeName}')">
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function editStoryFromEncoded(encodedItem) {
+      const item = JSON.parse(decodeURIComponent(encodedItem));
+      editStory(item);
+    }
+
+    function editStory(item) {
+      document.getElementById("formTitle").textContent = "Edit Success Story";
+      document.getElementById("editId").value = item._id;
+      document.getElementById("name").value = item.name || "";
+      document.getElementById("designation").value = item.designation || "";
+      document.getElementById("company").value = item.company || "";
+      document.getElementById("profileLink").value = item.profileLink || "";
+      document.getElementById("status").value = item.status || "active";
+      document.getElementById("sortOrder").value = item.sortOrder || 0;
+
+      document.getElementById("studentImage").value = "";
+      document.getElementById("companyLogo").value = "";
+
+      showToast("Edit mode enabled. Update the form and save.", "info");
+
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+      });
+    }
+
+    function resetStoryForm() {
+      document.getElementById("formTitle").textContent = "Add Success Story";
+      form.reset();
+      document.getElementById("editId").value = "";
+      document.getElementById("status").value = "active";
+      document.getElementById("sortOrder").value = 0;
+      document.getElementById("saveStoryButton").textContent = "Save Story";
+      document.getElementById("message").innerHTML = "";
+    }
+
+    function confirmDeleteStory(id, name) {
+      confirmAction(
+        `Are you sure you want to delete "${name}"? This action cannot be undone.`,
+        function () {
+          deleteStory(id);
+        },
+        {
+          title: "Delete Success Story",
+          confirmText: "Delete",
+          cancelText: "Cancel",
+          confirmButtonClass: "btn-danger"
+        }
+      );
+    }
+
+    async function deleteStory(id) {
+      try {
+        const result = await apiFetch(`/success-stories/${id}`, {
+          method: "DELETE",
+          headers: authHeaders(false)
+        });
+
+        showToast(result.message || "Success story deleted successfully.", "success");
+        loadSuccessStories();
+      } catch (error) {
+        showToast(error.message || "Unable to delete success story.", "error");
+      }
+    }
+
+    loadSuccessStories();
+  </script>
+</body>
+</html>
